@@ -3,37 +3,38 @@ from supabase import create_client, Client
 
 st.set_page_config(page_title="FantaSchedina", layout="centered")
 
-# Nascondiamo i link grigi automatici in alto a sinistra
+# CSS DEFINITIVO: Nasconde la lista file automatica e pulisce il menu
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
+    .stButton>button {width: 100%; border-radius: 5px;}
     </style>
     """, unsafe_allow_html=True)
 
 # Inizializzazione Supabase
-supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 if "user" not in st.session_state:
     st.session_state.user = None
 
-# --- MENU LATERALE ---
+# --- BARRA LATERALE PERSONALIZZATA ---
 st.sidebar.title("🏆 Menu Principale")
 
-# Per la Home, se page_link da errore, usiamo un semplice bottone che ricarica
-if st.sidebar.button("🏠 Home / Login", use_container_width=True):
+# Usiamo switch_page per la Home per evitare errori di link
+if st.sidebar.button("👤 Home / Login"):
     st.switch_page("app.py")
 
 st.sidebar.divider()
 
-# PERCORSI CORRETTI (Devono coincidere con la cartella su GitHub)
+# Link ai file nella cartella 'pagine_app' (percorsi verificati dal tuo GitHub)
 try:
     st.sidebar.page_link("pagine_app/2_Registrazione.py", label="Registrazione Utente", icon="📝")
     st.sidebar.page_link("pagine_app/3_Admin.py", label="Accesso Admin", icon="🔐")
     
     if st.session_state.user:
         st.sidebar.page_link("pagine_app/1_Gioca.py", label="VAI A GIOCARE", icon="⚽")
-except Exception as e:
-    st.sidebar.error("Errore nei link. Verifica i nomi dei file su GitHub.")
+except Exception:
+    st.sidebar.error("Verifica nomi file in 'pagine_app'")
 
 # --- CONTENUTO HOME ---
 if st.session_state.user is None:
@@ -50,7 +51,7 @@ if st.session_state.user is None:
                 st.error("Credenziali non valide.")
 else:
     st.title(f"Bentornato! 👋")
-    st.success(f"Sei loggato come: {st.session_state.user.email}")
-    if st.sidebar.button("Logout 🚪", use_container_width=True):
+    st.success(f"Loggato come: {st.session_state.user.email}")
+    if st.sidebar.button("Logout 🚪"):
         st.session_state.user = None
         st.rerun()
