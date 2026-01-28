@@ -1,10 +1,9 @@
 import streamlit as st
 from supabase import create_client, Client
 
-# Configurazione iniziale
 st.set_page_config(page_title="FantaSchedina", layout="centered")
 
-# CSS per nascondere il menu automatico "grigio" di Streamlit
+# Forza la rimozione dei link automatici in alto
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -17,29 +16,26 @@ supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 if "user" not in st.session_state:
     st.session_state.user = None
 
-# --- MENU LATERALE PERSONALIZZATO ---
+# --- BARRA LATERALE PULITA ---
 st.sidebar.title("🏆 Menu Principale")
 
-# Link alla Home (questo file)
+# Link alla Home
 st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
 
-# Link ai file dentro la cartella 'pagine_app'
+# Link personalizzati alla cartella 'pagine_app'
 try:
     st.sidebar.page_link("pagine_app/2_Registrazione.py", label="Registrazione Utente", icon="📝")
     st.sidebar.page_link("pagine_app/3_Admin.py", label="Accesso Admin", icon="🔐")
-
-    # Mostra 'Gioca' solo se l'utente è loggato
+    
     if st.session_state.user:
         st.sidebar.divider()
         st.sidebar.page_link("pagine_app/1_Gioca.py", label="VAI A GIOCARE", icon="⚽")
-except Exception as e:
-    st.sidebar.error("Errore nei link: verifica nomi cartelle su GitHub")
+except Exception:
+    st.sidebar.error("⚠️ Errore: Verifica che la cartella su GitHub si chiami 'pagine_app' e contenga i file corretti.")
 
-# --- CONTENUTO DELLA HOME ---
+# --- CONTENUTO HOME ---
 if st.session_state.user is None:
     st.title("Benvenuto su FantaSchedina")
-    st.write("Accedi per iniziare a puntare sulla tua giornata preferita.")
-    
     with st.form("login_form"):
         email = st.text_input("Email")
         password = st.text_input("Password", type="password")
@@ -51,8 +47,8 @@ if st.session_state.user is None:
             except:
                 st.error("Credenziali non valide.")
 else:
-    st.title(f"Bentornato!")
-    st.success(f"Sei loggato come: {st.session_state.user.email}")
-    if st.button("Scollegati (Logout)"):
+    st.title(f"Ciao! 👋")
+    st.success(f"Sei collegato come: {st.session_state.user.email}")
+    if st.button("Logout"):
         st.session_state.user = None
         st.rerun()
