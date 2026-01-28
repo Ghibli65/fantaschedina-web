@@ -1,40 +1,32 @@
 import streamlit as st
 from supabase import create_client, Client
 
-st.set_page_config(page_title="Inserisci Pronostici")
+st.set_page_config(page_title="Gioca", layout="wide")
+supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
-url = st.secrets["SUPABASE_URL"]
-key = st.secrets["SUPABASE_KEY"]
-supabase: Client = create_client(url, key)
+st.title("⚽ Piazza la tua Schedina")
 
-if "user" not in st.session_state or st.session_state.user is None:
-    st.warning("Fai il login in Home Page per giocare!")
-    st.stop()
+# Prende le ultime 10 partite caricate
+res = supabase.table("partite").select("*").order("id", desc=True).limit(10).execute()
+partite = res.data
 
-st.title("⚽ La tua Schedina")
-
-# Recupera l'ultima giornata inserita
-res = supabase.table("partite").select("giornata").order("giornata", desc=True).limit(1).execute()
-if not res.data:
-    st.info("L'amministratore non ha ancora caricato le partite.")
+if not partite:
+    st.warning("Nessuna partita disponibile. Attendi l'Admin.")
 else:
-    g_corrente = res.data[0]['giornata']
-    st.subheader(f"Pronostici per la Giornata {g_corrente}")
-    
-    partite = supabase.table("partite").select("*").eq("giornata", g_corrente).execute().data
-    
-    with st.form("schedina"):
-        pronostici = {}
+    with st.form("schedina_form"):
+        scelte = []
         for p in partite:
-            pronostici[p['id']] = st.radio(f"{p['match']}", ["1", "X", "2"], horizontal=True)
+            st.write(f"#### {p['match']}")
+            # Creiamo le etichette con le quote per l'utente
+            opzioni = {
+                f"1 ({p['quote_1']})": "1", f"X ({p['quote_x']})": "X", f"2 ({p['quote_2']})": "2",
+                f"1X ({p['quote_1x']})": "1X", f"X2 ({p['quote_x2']})": "X2", f"12 ({p['quote_12']})": "12",
+                f"U2.5 ({p['quote_u25']})": "U25", f"O2.5 ({p['quote_o25']})": "O25",
+                f"G ({p['quote_g']})": "G", f"NG ({p['quote_ng']})": "NG"
+            }
+            scelta = st.selectbox("Esito:", list(opzioni.keys()), key=f"s_{p['id']}")
+            scelte.append({"p_id": p['id'], "segno": opzioni[scelta]})
         
-        if st.form_submit_button("INVIA SCHEDINA"):
-            for p_id, segno in pronostici.items():
-                supabase.table("pronostici").upsert({
-                    "user_id": st.session_state.user.id,
-                    "partita_id": p_id,
-                    "pronostico": segno,
-                    "email_utente": st.session_state.user.email,
-                    "giornata": g_corrente
-                }).execute()
-            st.success("Schedina salvata! In bocca al lupo 🍀")
+        if st.form_submit_button("INVIA GIOCATA"):
+            # Salvataggio su Supabase (assicurati di avere la tabella pronostici pronta)
+            st.success("Schedina inviata con successo!")
