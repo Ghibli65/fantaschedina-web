@@ -20,6 +20,7 @@ st.sidebar.title("🏆 Menu Principale")
 st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
 st.sidebar.page_link("pages/2_Registrazione.py", label="Registrazione Utente", icon="📝")
 st.sidebar.page_link("pages/3_Admin.py", label="Accesso Admin", icon="🔐")
+st.sidebar.page_link("pages/4_Caricamento_Dati.py", label="Carica Quote", icon="🚀") # <-- AGGIUNGI QUI
 
 if "user" in st.session_state and st.session_state.user:
     st.sidebar.divider()
