@@ -4,7 +4,7 @@ st.set_page_config(page_title="Pannello Admin", layout="wide")
 
 # --- LOGIN ADMIN INDIPENDENTE ---
 if "admin_logged_in" not in st.session_state:
-    # Mostriamo il menu normale finché non si è loggati come admin
+    # Mostriamo il menu normale dell'app finché non si è loggati come admin
     st.sidebar.title("🏆 Menu Principale")
     st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
     
@@ -20,31 +20,39 @@ if "admin_logged_in" not in st.session_state:
                 st.error("Credenziali Amministratore errate!")
     st.stop()
 
-# --- SE SEI LOGGATO COME ADMIN: FAI SCOMPARIRE LA BARRA A SINISTRA ---
+# --- SE LOGGATO: NUOVA BARRA LATERALE ADMIN ---
+# Nascondiamo i link della navigazione standard e personalizziamo la sidebar admin
 st.markdown("""
     <style>
-    /* Nasconde completamente la barra laterale */
-    [data-testid="stSidebar"] {
-        display: none;
-    }
-    /* Allarga il contenuto per occupare lo spazio rimasto vuoto */
-    .main .block-container {
-        max-width: 95%;
-        padding-left: 5rem;
-        padding-right: 5rem;
-    }
+    [data-testid="stSidebarNav"] { display: none; }
+    .stPageLink { background-color: #f0f2f6; border-radius: 8px; margin-bottom: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONTENUTO PANNELLO ADMIN (Senza barra laterale) ---
-st.title("⚙️ Pannello di Controllo Admin")
-st.write(f"Benvenuto, **Amministratore**. La barra laterale è stata nascosta.")
+st.sidebar.title("⚙️ Pannello Admin")
+scelta = st.sidebar.radio(
+    "Seleziona Operazione:",
+    ["Inserisci Giornata", "Inserisci Risultati", "Gestione Utenti"]
+)
 
-if st.button("🚪 Esci e torna al Menu"):
+st.sidebar.divider()
+if st.sidebar.button("🚪 Esci e torna al Menu"):
     del st.session_state.admin_logged_in
     st.rerun()
 
-st.divider()
+# --- LOGICA DELLE SEZIONI ---
 
-# Spazio pronto per quello che vorrai inserire
-st.info("Sono pronto! Dimmi cosa dobbiamo inserire qui (tabelle, gestione partite, risultati...).")
+if scelta == "Inserisci Giornata":
+    st.title("📅 Inserisci Giornata")
+    st.write("Qui caricheremo le nuove partite per la prossima giornata.")
+    # Esempio di segnaposto
+    with st.expander("Istruzioni"):
+        st.info("Incolla le partite nel formato: SquadraA-SquadraB;1.80;3.40;4.00...")
+
+elif scelta == "Inserisci Risultati":
+    st.title("🏁 Inserisci Risultati")
+    st.write("Qui inseriremo i risultati finali delle partite giocate per calcolare i punti.")
+
+elif scelta == "Gestione Utenti":
+    st.title("👥 Gestione Utenti")
+    st.write("Qui potrai visualizzare gli iscritti e gestire i loro profili.")
