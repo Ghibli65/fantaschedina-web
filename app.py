@@ -20,6 +20,7 @@ def crea_sidebar():
     st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
     st.sidebar.page_link("pages/2_Registrazione.py", label="Registrazione Utente", icon="📝")
     st.sidebar.page_link("pages/3_Admin.py", label="Accesso Admin", icon="🔐")
+    st.sidebar.page_link("pages/4_Caricamento_Dati.py", label="Carica Quote", icon="🚀")
     if st.session_state.user:
         st.sidebar.divider()
         st.sidebar.page_link("pages/1_Gioca.py", label="VAI A GIOCARE", icon="⚽")
