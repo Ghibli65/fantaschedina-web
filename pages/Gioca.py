@@ -4,49 +4,36 @@ from supabase import create_client, Client
 st.set_page_config(page_title="Gioca Schedina", layout="wide")
 supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
-# --- STILE CSS PER BOTTONI ROSSI ---
+# --- STILE CSS ---
 st.markdown("""
     <style>
-    /* Stile per i bottoni selezionati */
-    div.stButton > button.selected {
-        background-color: #ff4b4b !important;
-        color: white !important;
-        border: 2px solid #800000 !important;
-    }
-    /* Allineamento colonna sinistra */
-    [data-testid="stVerticalBlock"] > div:has(div.stInfo) {
-        border-left: 3px solid #ff4b4b;
-        padding-left: 15px;
-    }
+    div.stButton > button:first-child { border-radius: 10px; }
+    [data-testid="stMetricValue"] { color: #ff4b4b; }
     </style>
     """, unsafe_allow_html=True)
 
 if "user" not in st.session_state or st.session_state.user is None:
-    st.warning("Fai il login in Home Page per giocare!")
+    st.warning("Accedi dalla Home per giocare.")
     st.stop()
 
 st.title("⚽ La tua Schedina")
 
-# Recupero ultime 10 partite caricate
-res = supabase.table("partite").select("*").order("id", desc=True).limit(10).execute()
+# Recupero partite (ordinate per ID per garantire l'ordine fisso)
+res = supabase.table("partite").select("*").order("id", desc=False).limit(10).execute()
 partite = res.data
 
 if not partite:
-    st.info("Attendi che l'Admin carichi le partite della giornata.")
+    st.info("Nessuna partita disponibile.")
 else:
-    # Stato della schedina
     if "schedina" not in st.session_state:
         st.session_state.schedina = {}
 
-    col_riepilogo, col_partite = st.columns([1, 3])
+    col_riepilogo, col_partite = st.columns([1, 2.5])
 
     # --- COLONNA DESTRA: SELEZIONE ---
     with col_partite:
-        st.subheader("Seleziona i tuoi pronostici")
         for p in partite:
-            st.write(f"**{p['match']}**")
-            
-            # Griglia quote
+            st.write(f"### {p['match']}")
             r1 = st.columns(5)
             r2 = st.columns(5)
             
@@ -59,58 +46,54 @@ else:
 
             for label, quota, slot in opzioni:
                 btn_key = f"btn_{p['id']}_{label}"
-                # Verifica se questo esito è quello selezionato
                 is_selected = st.session_state.schedina.get(p['id'], {}).get('segno') == label
                 
-                if slot.button(f"{label}\n{quota}", key=btn_key, 
-                               help=f"Quota: {quota}",
-                               type="secondary" if not is_selected else "primary"):
+                # Se selezionato, il tasto diventa rosso (primary)
+                tipo = "primary" if is_selected else "secondary"
+                
+                if slot.button(f"{label}\n{quota}", key=btn_key, type=tipo, use_container_width=True):
                     st.session_state.schedina[p['id']] = {
-                        "p_id": p['id'],
+                        "id_partita": p['id'], # Usato per l'ordinamento
                         "match": p['match'],
                         "segno": label,
                         "quota": quota,
                         "giornata": p['giornata']
                     }
-                    st.rerun() # Aggiorna subito la colonna sinistra
-            st.divider()
+                    st.rerun()
 
-    # --- COLONNA SINISTRA: SCHEDINA ---
+    # --- COLONNA SINISTRA: RIEPILOGO ORDINATO ---
     with col_riepilogo:
         st.subheader("📋 Riepilogo")
-        tot_quota = 1.0
+        somma_quote = 0.0
         contatore = 0
         
-        for p_id, info in st.session_state.schedina.items():
-            st.info(f"**{info['match']}**\n{info['segno']} @{info['quota']}")
-            tot_quota *= info['quota']
+        # Ordiniamo gli elementi della schedina per ID prima di mostrarli
+        schedina_ordinata = dict(sorted(st.session_state.schedina.items()))
+        
+        for p_id, info in schedina_ordinata.items():
+            st.info(f"**{info['match']}**\n{info['segno']} (@{info['quota']})")
+            somma_quote += info['quota'] # CALCOLO DELLA SOMMA
             contatore += 1
         
-        if contatore > 0:
-            st.metric("Quota Totale", f"{tot_quota:.2f}")
+        st.metric("Somma Quote Totale", f"{somma_quote:.2f}")
+        st.write(f"Selezionate: {contatore}/10")
         
-        st.write(f"Partite: {contatore}/10")
-        
-        # Il tasto si abilita solo con 10 partite
-        btn_disabilitato = contatore < 10
-        
-        if st.button("SALVA SCHEDINA", disabled=btn_disabilitato, use_container_width=True):
+        btn_off = contatore < 10
+        if st.button("SALVA GIOCATA", disabled=btn_off, use_container_width=True, type="primary"):
             try:
-                per_database = []
+                dati_db = []
                 for p_id, info in st.session_state.schedina.items():
-                    per_database.append({
+                    dati_db.append({
                         "user_id": st.session_state.user.id,
                         "email_utente": st.session_state.user.email,
-                        "partita_id": info['p_id'],
+                        "partita_id": info['id_partita'],
                         "pronostico": info['segno'],
                         "quota_giocata": info['quota'],
                         "giornata": info['giornata']
                     })
-                
-                supabase.table("pronostici").insert(per_database).execute()
-                st.success("✅ Giocata registrata!")
+                supabase.table("pronostici").insert(dati_db).execute()
+                st.success("✅ Salvata!")
                 st.balloons()
-                # Pulisce la schedina dopo il salvataggio
-                st.session_state.schedina = {}
+                st.session_state.schedina = {} # Reset
             except Exception as e:
-                st.error(f"Errore nel salvataggio: {e}")
+                st.error(f"Errore: {e}")
