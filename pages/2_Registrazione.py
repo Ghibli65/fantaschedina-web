@@ -1,24 +1,16 @@
 import streamlit as st
+from supabase import create_client
 
 st.set_page_config(page_title="Registrazione")
-supabase = st.session_state.supabase
+
+# --- STESSO CSS DI APP.PY ---
+st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;} .stPageLink {background-color: #f0f2f6; border-radius: 8px; margin-bottom: 5px;}</style>""", unsafe_allow_html=True)
+
+# --- STESSA SIDEBAR DI APP.PY ---
+st.sidebar.title("🏆 Menu Principale")
+st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
+st.sidebar.page_link("pages/2_Registrazione.py", label="Registrazione Utente", icon="📝")
+st.sidebar.page_link("pages/3_Admin.py", label="Accesso Admin", icon="🔐")
 
 st.title("📝 Registrazione")
-
-with st.form("reg"):
-    n = st.text_input("Nome")
-    c = st.text_input("Cognome")
-    cel = st.text_input("Cellulare")
-    em = st.text_input("Email")
-    pw = st.text_input("Password", type="password")
-    
-    if st.form_submit_button("REGISTRATI"):
-        if n and c and em and len(pw) >= 6:
-            try:
-                supabase.auth.sign_up({
-                    "email": em, "password": pw,
-                    "options": {"data": {"nome": n, "cognome": c, "cellulare": cel}}
-                })
-                st.success("Registrazione completata! Vai in Home per il login.")
-            except Exception as e: st.error(f"Errore: {e}")
-        else: st.error("Compila tutti i campi correttamente.")
+# ... (tuo codice registrazione qui) ...
