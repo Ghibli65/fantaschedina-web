@@ -3,7 +3,7 @@ from supabase import create_client, Client
 
 st.set_page_config(page_title="FantaSchedina", layout="centered")
 
-# Nasconde i link grigi automatici in alto a sinistra
+# Nascondiamo i link grigi automatici in alto a sinistra
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -19,19 +19,21 @@ if "user" not in st.session_state:
 # --- MENU LATERALE ---
 st.sidebar.title("🏆 Menu Principale")
 
-# Link Home
-st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
+# Per la Home, se page_link da errore, usiamo un semplice bottone che ricarica
+if st.sidebar.button("🏠 Home / Login", use_container_width=True):
+    st.switch_page("app.py")
 
-# Link diretti ai file (Usiamo i percorsi che hai su GitHub)
+st.sidebar.divider()
+
+# PERCORSI CORRETTI (Devono coincidere con la cartella su GitHub)
 try:
     st.sidebar.page_link("pagine_app/2_Registrazione.py", label="Registrazione Utente", icon="📝")
     st.sidebar.page_link("pagine_app/3_Admin.py", label="Accesso Admin", icon="🔐")
     
     if st.session_state.user:
-        st.sidebar.divider()
         st.sidebar.page_link("pagine_app/1_Gioca.py", label="VAI A GIOCARE", icon="⚽")
 except Exception as e:
-    st.sidebar.error("Verifica i nomi dei file su GitHub")
+    st.sidebar.error("Errore nei link. Verifica i nomi dei file su GitHub.")
 
 # --- CONTENUTO HOME ---
 if st.session_state.user is None:
@@ -48,7 +50,7 @@ if st.session_state.user is None:
                 st.error("Credenziali non valide.")
 else:
     st.title(f"Bentornato! 👋")
-    st.info(f"Sei loggato come: {st.session_state.user.email}")
-    if st.button("Logout"):
+    st.success(f"Sei loggato come: {st.session_state.user.email}")
+    if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user = None
         st.rerun()
