@@ -1,10 +1,9 @@
 import streamlit as st
 from supabase import create_client, Client
 
-# Configurazione pagina per nascondere il menu di default
-st.set_page_config(page_title="FantaSchedina", layout="centered", initial_sidebar_state="expanded")
+st.set_page_config(page_title="FantaSchedina", layout="centered")
 
-# Nascondiamo la navigazione automatica con i CSS
+# CSS per nascondere la lista file automatica di Streamlit in alto a sinistra
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -20,12 +19,12 @@ if "user" not in st.session_state:
 # --- BARRA LATERALE PULITA ---
 st.sidebar.title("Menu Principale")
 st.sidebar.page_link("app.py", label="Home / Accesso Utente", icon="👤")
-st.sidebar.page_link(".pages/2_Registrazione.py", label="Registrazione Utente", icon="📝")
-st.sidebar.page_link(".pages/3_Admin.py", label="Accesso Admin", icon="🔐")
+st.sidebar.page_link("pagine/2_Registrazione.py", label="Registrazione Utente", icon="📝")
+st.sidebar.page_link("pagine/3_Admin.py", label="Accesso Admin", icon="🔐")
 
 if st.session_state.user:
     st.sidebar.divider()
-    st.sidebar.page_link(".pages/1_Gioca.py", label="VAI A GIOCARE", icon="⚽")
+    st.sidebar.page_link("pagine/1_Gioca.py", label="VAI A GIOCARE", icon="⚽")
 
 # --- LOGIN IN HOME ---
 if st.session_state.user is None:
@@ -42,6 +41,7 @@ if st.session_state.user is None:
                 st.error("Credenziali errate")
 else:
     st.title(f"Ciao! 👋")
+    st.write(f"Loggato come: {st.session_state.user.email}")
     if st.button("Esci (Logout)"):
         st.session_state.user = None
         st.rerun()
