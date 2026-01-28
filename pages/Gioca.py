@@ -1,1 +1,1 @@
-import streamlit as st; st.write("Menu attivo!").
+import streamlit as st; st.write("Menu attivo!")
