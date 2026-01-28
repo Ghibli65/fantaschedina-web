@@ -1,5 +1,6 @@
 import streamlit as st
 from supabase import create_client, Client
+st.sidebar.write("Controllo Menu"
 
 # --- RECUPERO SEGRETI ---
 url = st.secrets.get("SUPABASE_URL")
