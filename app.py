@@ -1,19 +1,19 @@
 import streamlit as st
 from supabase import create_client, Client
 
+# Configurazione pagina
 st.set_page_config(page_title="FantaSchedina", layout="centered")
 
-# --- IL TRUCCO MAGICO PER IL MENU ---
+# --- IL TRUCCO PER IL MENU PULITO ---
 st.markdown("""
     <style>
-    /* Nasconde i link automatici 'grigi' di Streamlit */
+    /* Nasconde la navigazione automatica 'grigia' di Streamlit */
     [data-testid="stSidebarNav"] {display: none;}
     
-    /* Rende i tuoi bottoni del menu più belli */
+    /* Rende i pulsanti del menu più evidenti */
     .stPageLink {
         background-color: #f0f2f6;
-        border-radius: 10px;
-        padding: 5px;
+        border-radius: 8px;
         margin-bottom: 5px;
     }
     </style>
@@ -25,8 +25,6 @@ if "user" not in st.session_state: st.session_state.user = None
 
 # --- MENU LATERALE PERSONALIZZATO ---
 st.sidebar.title("🏆 Menu Principale")
-
-# Link sicuri verso la cartella 'pages'
 st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
 st.sidebar.page_link("pages/2_Registrazione.py", label="Registrazione Utente", icon="📝")
 st.sidebar.page_link("pages/3_Admin.py", label="Accesso Admin", icon="🔐")
@@ -48,7 +46,7 @@ if st.session_state.user is None:
                 st.rerun()
             except: st.error("Credenziali errate")
 else:
-    st.title(f"Ciao! 👋")
+    st.title(f"Bentornato! 👋")
     st.success(f"Loggato come: {st.session_state.user.email}")
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user = None
