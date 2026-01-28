@@ -9,7 +9,7 @@ if "user" not in st.session_state or st.session_state.user is None:
     st.stop()
 
 # Opzionale: Protezione extra con una password specifica per Admin
-ADMIN_PASSWORD = ""Fanta2026!"" 
+ADMIN_PASSWORD = "Fanta2026!" 
 if "admin_authenticated" not in st.session_state:
     pwd = st.text_input("Inserisci la Password Amministratore", type="password")
     if st.button("Sblocca Pannello"):
