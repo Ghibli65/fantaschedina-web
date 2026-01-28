@@ -1,13 +1,21 @@
 import streamlit as st
 from supabase import create_client, Client
-import os
 
 st.set_page_config(page_title="FantaSchedina", layout="centered")
 
-# CSS: Nasconde i link grigi automatici e pulisce il menu
+# --- IL TRUCCO MAGICO PER IL MENU ---
 st.markdown("""
     <style>
+    /* Nasconde i link automatici 'grigi' di Streamlit */
     [data-testid="stSidebarNav"] {display: none;}
+    
+    /* Rende i tuoi bottoni del menu più belli */
+    .stPageLink {
+        background-color: #f0f2f6;
+        border-radius: 10px;
+        padding: 5px;
+        margin-bottom: 5px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -15,30 +23,17 @@ st.markdown("""
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 if "user" not in st.session_state: st.session_state.user = None
 
-# --- MENU LATERALE ---
+# --- MENU LATERALE PERSONALIZZATO ---
 st.sidebar.title("🏆 Menu Principale")
 
-if st.sidebar.button("🏠 Home / Login", use_container_width=True):
-    st.switch_page("app.py")
-
-st.sidebar.divider()
-
-# Funzione per creare link sicuri
-def crea_link(percorso, etichetta, icona):
-    # Controlla se il file esiste davvero [cite: 2026-01-28]
-    if os.path.exists(percorso):
-        st.sidebar.page_link(percorso, label=etichetta, icon=icona)
-    else:
-        # Se fallisce, ci dice cosa vede il server [cite: 2026-01-28]
-        st.sidebar.error(f"❌ Non trovo: {percorso}")
-
-# Prova a creare i link con i percorsi relativi
-crea_link("pagine_app/2_Registrazione.py", "Registrazione Utente", "📝")
-crea_link("pagine_app/3_Admin.py", "Accesso Admin", "🔐")
+# Link sicuri verso la cartella 'pages'
+st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
+st.sidebar.page_link("pages/2_Registrazione.py", label="Registrazione Utente", icon="📝")
+st.sidebar.page_link("pages/3_Admin.py", label="Accesso Admin", icon="🔐")
 
 if st.session_state.user:
     st.sidebar.divider()
-    crea_link("pagine_app/1_Gioca.py", "VAI A GIOCARE", "⚽")
+    st.sidebar.page_link("pages/1_Gioca.py", label="VAI A GIOCARE", icon="⚽")
 
 # --- CONTENUTO HOME ---
 if st.session_state.user is None:
@@ -53,8 +48,8 @@ if st.session_state.user is None:
                 st.rerun()
             except: st.error("Credenziali errate")
 else:
-    st.title(f"Bentornato! 👋")
+    st.title(f"Ciao! 👋")
     st.success(f"Loggato come: {st.session_state.user.email}")
-    if st.sidebar.button("Logout 🚪"):
+    if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user = None
         st.rerun()
