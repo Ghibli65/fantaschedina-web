@@ -3,7 +3,7 @@ from supabase import create_client, Client
 
 st.set_page_config(page_title="FantaSchedina", layout="centered")
 
-# CSS per nascondere la lista file automatica di Streamlit in alto a sinistra
+# CSS per nascondere la navigazione automatica di Streamlit (i link grigi in alto)
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -19,6 +19,7 @@ if "user" not in st.session_state:
 # --- BARRA LATERALE PULITA ---
 st.sidebar.title("Menu Principale")
 st.sidebar.page_link("app.py", label="Home / Accesso Utente", icon="👤")
+# Percorso corretto dopo aver rinominato la cartella in 'pagine'
 st.sidebar.page_link("pagine/2_Registrazione.py", label="Registrazione Utente", icon="📝")
 st.sidebar.page_link("pagine/3_Admin.py", label="Accesso Admin", icon="🔐")
 
@@ -36,12 +37,13 @@ if st.session_state.user is None:
             try:
                 res = supabase.auth.sign_in_with_password({"email": e, "password": p})
                 st.session_state.user = res.user
+                st.success("Accesso eseguito!")
                 st.rerun()
             except:
                 st.error("Credenziali errate")
 else:
     st.title(f"Ciao! 👋")
-    st.write(f"Loggato come: {st.session_state.user.email}")
+    st.write(f"Utente: {st.session_state.user.email}")
     if st.button("Esci (Logout)"):
         st.session_state.user = None
         st.rerun()
