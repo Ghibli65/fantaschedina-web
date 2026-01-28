@@ -1,6 +1,25 @@
 import streamlit as st
 from supabase import create_client, Client
 
+st.set_page_config(page_title="Admin", layout="wide")
+
+# CONTROLLO ACCESSO
+if "user" not in st.session_state or st.session_state.user is None:
+    st.warning("⛔ Accesso negato. Effettua il login nella Home Page.")
+    st.stop()
+
+# Opzionale: Protezione extra con una password specifica per Admin
+ADMIN_PASSWORD = "la_tua_password_segreta" 
+if "admin_authenticated" not in st.session_state:
+    pwd = st.text_input("Inserisci la Password Amministratore", type="password")
+    if st.button("Sblocca Pannello"):
+        if pwd == ADMIN_PASSWORD:
+            st.session_state.admin_authenticated = True
+            st.rerun()
+        else:
+            st.error("Password errata")
+    st.stop()
+
 st.set_page_config(page_title="Gioca Schedina", layout="wide")
 supabase: Client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
