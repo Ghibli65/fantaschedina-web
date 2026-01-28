@@ -5,20 +5,34 @@ st.set_page_config(page_title="Registrazione")
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 st.title("📝 Registrazione")
+st.write("Crea il tuo profilo per iniziare a giocare.")
+
 with st.form("reg_form"):
-    n = st.text_input("Nome")
-    c = st.text_input("Cognome")
-    cel = st.text_input("Cellulare (User)")
-    em = st.text_input("Email")
-    pw = st.text_input("Password", type="password")
+    col1, col2 = st.columns(2)
+    nome = col1.text_input("Nome")
+    cognome = col2.text_input("Cognome")
+    # Il cellulare viene usato come nome utente nei metadati
+    cellulare = st.text_input("Numero di Cellulare (Nome Utente)")
+    email = st.text_input("Email")
+    pw = st.text_input("Password (min. 6 caratteri)", type="password")
     
     if st.form_submit_button("REGISTRAMI"):
-        if n and c and cel and em and len(pw) >= 6:
+        if nome and cognome and cellulare and email and len(pw) >= 6:
             try:
-                supabase.auth.sign_up({
-                    "email": em, "password": pw,
-                    "options": {"data": {"nome": n, "cognome": c, "cellulare": cel}}
+                # Salvataggio dati extra nei metadati di Supabase
+                res = supabase.auth.sign_up({
+                    "email": email,
+                    "password": pw,
+                    "options": {
+                        "data": {
+                            "nome": nome,
+                            "cognome": cognome,
+                            "cellulare": cellulare
+                        }
+                    }
                 })
-                st.success("✅ Registrato! Torna in Home.")
-            except Exception as e: st.error(f"Errore: {e}")
-
+                st.success("✅ Registrazione completata! Torna in Home per il Login.")
+            except Exception as e:
+                st.error(f"Errore: {e}")
+        else:
+            st.warning("Per favore, compila tutti i campi correttamente.")
