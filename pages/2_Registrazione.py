@@ -1,38 +1,24 @@
 import streamlit as st
-from supabase import create_client
 
 st.set_page_config(page_title="Registrazione")
-supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+supabase = st.session_state.supabase
 
 st.title("📝 Registrazione")
-st.write("Crea il tuo profilo per iniziare a giocare.")
 
-with st.form("reg_form"):
-    col1, col2 = st.columns(2)
-    nome = col1.text_input("Nome")
-    cognome = col2.text_input("Cognome")
-    # Il cellulare viene usato come nome utente nei metadati
-    cellulare = st.text_input("Numero di Cellulare (Nome Utente)")
-    email = st.text_input("Email")
-    pw = st.text_input("Password (min. 6 caratteri)", type="password")
+with st.form("reg"):
+    n = st.text_input("Nome")
+    c = st.text_input("Cognome")
+    cel = st.text_input("Cellulare")
+    em = st.text_input("Email")
+    pw = st.text_input("Password", type="password")
     
-    if st.form_submit_button("REGISTRAMI"):
-        if nome and cognome and cellulare and email and len(pw) >= 6:
+    if st.form_submit_button("REGISTRATI"):
+        if n and c and em and len(pw) >= 6:
             try:
-                # Salvataggio dati extra nei metadati di Supabase
-                res = supabase.auth.sign_up({
-                    "email": email,
-                    "password": pw,
-                    "options": {
-                        "data": {
-                            "nome": nome,
-                            "cognome": cognome,
-                            "cellulare": cellulare
-                        }
-                    }
+                supabase.auth.sign_up({
+                    "email": em, "password": pw,
+                    "options": {"data": {"nome": n, "cognome": c, "cellulare": cel}}
                 })
-                st.success("✅ Registrazione completata! Torna in Home per il Login.")
-            except Exception as e:
-                st.error(f"Errore: {e}")
-        else:
-            st.warning("Per favore, compila tutti i campi correttamente.")
+                st.success("Registrazione completata! Vai in Home per il login.")
+            except Exception as e: st.error(f"Errore: {e}")
+        else: st.error("Compila tutti i campi correttamente.")
