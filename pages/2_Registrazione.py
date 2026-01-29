@@ -10,15 +10,15 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- MENU LATERALE (Identico alla Home) ---
+# --- MENU LATERALE FISSO ---
 st.sidebar.title("🏆 Menu Principale")
 st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
 st.sidebar.page_link("pages/2_Registrazione.py", label="Registrazione Utente", icon="📝")
 st.sidebar.page_link("pages/3_Admin.py", label="Accesso Admin", icon="🔐")
 
 # --- FORM REGISTRAZIONE ---
-st.title("📝 Registrazione Utente")
-st.write("Inserisci i tuoi dati per creare un nuovo profilo giocatore.")
+st.title("📝 Registrazione Nuova Squadra")
+st.write("Completa i campi per iscriverti al FantaSchedina.")
 
 with st.form("reg_form"):
     col1, col2 = st.columns(2)
@@ -27,19 +27,18 @@ with st.form("reg_form"):
     with col2:
         cognome = st.text_input("Cognome")
     
-    # Nuovi campi aggiunti [cite: 2026-01-28]
     nome_utente = st.text_input("Nome Utente (Nickname)")
     cellulare = st.text_input("Numero di Cellulare")
     
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
-    
     st.divider()
     
-    if st.form_submit_button("REGISTRATI ORA", use_container_width=True):
+    email = st.text_input("Email")
+    password = st.text_input("Password (min. 6 caratteri)", type="password")
+    
+    if st.form_submit_button("CREA ACCOUNT", use_container_width=True):
         if nome and nome_utente and cellulare and email and len(password) >= 6:
             try:
-                # Logica di registrazione su Supabase [cite: 2026-01-28]
+                # Registrazione dell'utente con metadati su Supabase [cite: 2026-01-28]
                 st.session_state.supabase.auth.sign_up({
                     "email": email, 
                     "password": password,
@@ -52,10 +51,9 @@ with st.form("reg_form"):
                         }
                     }
                 })
-                st.success("✅ Registrazione completata con successo!")
+                st.success("✅ Registrazione inviata! Controlla l'email o torna in Home per il Login.")
                 st.balloons()
-                st.info("Ora puoi tornare nella Home per effettuare il Login.")
             except Exception as e:
-                st.error(f"Errore durante la registrazione: {e}")
+                st.error(f"Errore: {e}")
         else:
-            st.warning("⚠️ Compila tutti i campi obbligatori (Password: almeno 6 caratteri).")
+            st.warning("⚠️ Per favore, compila tutti i campi obbligatori.")
