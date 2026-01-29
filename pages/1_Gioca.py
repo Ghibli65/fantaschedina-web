@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="Compila Schedina", layout="wide")
+st.set_page_config(page_title="Gioca Schedina", layout="wide")
 
 st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;} .stPageLink {background-color: #f0f2f6; border-radius: 8px; margin-bottom: 5px;}</style>""", unsafe_allow_html=True)
 
@@ -9,39 +9,41 @@ st.sidebar.page_link("app.py", label="Home", icon="🏠")
 st.sidebar.page_link("pages/1_Gioca.py", label="⚽ GIOCA ORA", icon="⚽")
 
 if "user" not in st.session_state:
-    st.warning("Esegui il login dalla Home.")
+    st.warning("Esegui il login per giocare.")
     st.stop()
 
 st.title("📝 La tua Schedina")
 
-if st.button("🔄 AGGIORNA PALINSESTO"):
-    st.rerun()
-
+# Carichiamo le partite che hanno 'pubblicata' uguale a True
 try:
-    # Cerchiamo solo le partite dove pubblicata è True
     res = st.session_state.supabase.table("partite").select("*").eq("pubblicata", True).order("giornata").execute()
     partite = res.data
 
     if partite:
-        st.success(f"🏟️ Palinsesto LIVE trovato! Giornata: {partite[0]['giornata']}")
+        st.success(f"🏟️ Giornata {partite[0]['giornata']} disponibile!")
+        
         pronostici = {}
         for p in partite:
             with st.container():
-                st.subheader(p['match'])
-                scelta = st.segmented_control("Pronostico:", options=["1", "X", "2", "U", "O", "G", "NG"], key=f"m_{p['id']}")
+                st.markdown(f"### {p['match']}")
+                scelta = st.segmented_control(
+                    "Scegli l'esito:", 
+                    options=["1", "X", "2", "U", "O", "G", "NG"], 
+                    key=f"match_{p['id']}"
+                )
                 pronostici[p['id']] = scelta
-        
+                st.divider()
+
         if st.button("INVIA SCHEDINA 📤", type="primary", use_container_width=True):
             if None not in pronostici.values():
                 st.balloons()
-                st.success("Schedina inviata!")
+                st.success("✅ Schedina inviata!")
             else:
-                st.error("Completa tutte le partite!")
+                st.error("⚠️ Compila tutte le partite prima di inviare.")
     else:
-        st.warning("⚠️ Nessun palinsesto Live. Chiedi all'Admin di pubblicare la giornata.")
-        # Debug per l'admin: mostra quante partite totali ci sono nel DB (anche non pubblicate)
-        total = st.session_state.supabase.table("partite").select("id", count="exact").execute()
-        st.caption(f"(Debug: Partite totali nel database: {total.count if total.count else 0})")
+        st.warning("⚠️ L'Admin non ha ancora pubblicato le partite per questa settimana.")
+        # Debug per l'Admin
+        st.caption(f"Info tecnica: Loggato come {st.session_state.user.email}")
 
 except Exception as e:
-    st.error(f"Errore tecnico: {e}")
+    st.error(f"Errore nel caricamento: {e}")
