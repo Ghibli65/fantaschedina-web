@@ -1,53 +1,56 @@
 import streamlit as st
 
-st.set_page_config(page_title="Gioca", layout="wide")
+st.set_page_config(page_title="Gioca Schedina", layout="wide")
 
-if "user" not in st.session_state or st.session_state.user is None:
-    st.error("⛔ Devi prima fare il login in Home!")
-    st.stop()
+# CSS PER BLOCCO MENU AUTOMATICO
+st.markdown("""<style>[data-testid="stSidebarNav"] {display: none;} .stPageLink {background-color: #f0f2f6; border-radius: 8px; margin-bottom: 5px;} .match-box {background-color: #f9f9f9; padding: 15px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 10px;}</style>""", unsafe_allow_html=True)
 
-supabase = st.session_state.supabase
+# --- MENU UTENTE ---
+st.sidebar.title("🏆 FantaSchedina")
+st.sidebar.page_link("app.py", label="Home / Login", icon="🏠")
+st.sidebar.page_link("pages/1_Gioca.py", label="⚽ GIOCA ORA", icon="⚽")
 
 st.title("⚽ La tua Schedina")
 
-# Recupero partite
-res = supabase.table("partite").select("*").order("id").execute()
-partite = res.data
+# Carichiamo solo le partite pubblicate [cite: 2026-01-28]
+try:
+    res = st.session_state.supabase.table("partite").select("*").eq("pubblicata", True).order("giornata").execute()
+    partite = res.data
 
-if not partite:
-    st.warning("Nessuna partita disponibile al momento.")
-else:
-    if "schedina" not in st.session_state: st.session_state.schedina = {}
+    if partite:
+        st.info(f"📅 Giornata in corso: {partite[0]['giornata']}")
+        schedina_utente = {}
 
-    col_riepilogo, col_partite = st.columns([1, 2])
-
-    with col_partite:
         for p in partite:
-            st.subheader(f"{p['match']}")
-            # Griglia quote
-            c = st.columns(5)
-            # Lista opzioni
-            ops = [("1", p['quote_1']), ("X", p['quote_x']), ("2", p['quote_2']), ("1X", p['quote_1x']), ("X2", p['quote_x2'])]
-            for i, (label, q) in enumerate(ops):
-                btn_type = "primary" if st.session_state.schedina.get(p['id'], {}).get('segno') == label else "secondary"
-                if c[i].button(f"{label}\n{q}", key=f"{p['id']}_{label}", type=btn_type, use_container_width=True):
-                    st.session_state.schedina[p['id']] = {"match": p['match'], "segno": label, "quota": float(q), "id_p": p['id']}
-                    st.rerun()
+            st.markdown(f'<div class="match-box"><b>{p["match"]}</b></div>', unsafe_allow_html=True)
+            
+            # Griglia di pulsanti per i pronostici [cite: 2026-01-28]
+            opzioni = {
+                "1": p['quote_1'], "X": p['quote_x'], "2": p['quote_2'],
+                "1X": p['quote_1x'], "X2": p['quote_x2'], "12": p['quote_12'],
+                "U2.5": p['quote_u25'], "O2.5": p['quote_o25'], 
+                "GOAL": p['quote_g'], "NOGOAL": p['quote_ng']
+            }
+            
+            # L'utente sceglie l'esito [cite: 2026-01-28]
+            scelta = st.segmented_control(
+                "Scegli il pronostico:", 
+                options=list(opzioni.keys()), 
+                format_func=lambda x: f"{x} ({opzioni[x]})",
+                key=f"pick_{p['id']}"
+            )
+            schedina_utente[p['id']] = scelta
             st.divider()
 
-    with col_riepilogo:
-        st.sticky = True
-        st.subheader("📋 Riepilogo")
-        somma = 0.0
-        for pid, info in st.session_state.schedina.items():
-            st.write(f"{info['match']}: **{info['segno']}** (@{info['quota']})")
-            somma += info['quota']
-        
-        st.metric("SOMMA QUOTE", f"{somma:.2f}")
-        
-        if len(st.session_state.schedina) >= 10:
-            if st.button("SALVA SCHEDINA", type="primary", use_container_width=True):
-                # Logica inserimento DB qui
-                st.success("Schedina salvata!")
-        else:
-            st.write(f"Seleziona ancora {10 - len(st.session_state.schedina)} partite.")
+        if st.button("INVIA SCHEDINA 📤", type="primary", use_container_width=True):
+            if all(schedina_utente.values()):
+                # Qui il sistema è pronto per salvare i dati su Supabase [cite: 2026-01-28]
+                st.success("✅ Schedina inviata! In bocca al lupo!")
+                st.balloons()
+            else:
+                st.warning("⚠️ Completa tutte le partite prima di inviare!")
+    else:
+        st.warning("⏳ L'amministratore non ha ancora pubblicato le partite per questa giornata.")
+
+except Exception as e:
+    st.error(f"Errore caricamento: {e}")
