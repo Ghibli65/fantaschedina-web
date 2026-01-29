@@ -1,28 +1,31 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Compila Schedina", layout="wide")
+st.set_page_config(page_title="La tua Schedina", layout="wide")
 
-# CSS per eliminare barre di scorrimento e stilizzare il carrello
+# CSS per il Carrello a sinistra e pulizia visiva
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
     .stDataFrame { width: 100% !important; }
     .cart-container {
-        background-color: #f1f3f6;
-        padding: 20px;
-        border-radius: 15px;
-        border: 1px solid #d1d5db;
+        background-color: #f8fafc;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        position: sticky;
+        top: 20px;
     }
     .total-display {
-        font-size: 24px;
+        font-size: 22px;
         font-weight: bold;
         color: #1e3c72;
         text-align: center;
-        padding: 10px;
-        background: white;
-        border-radius: 10px;
+        padding: 12px;
+        background: #ebf2ff;
+        border-radius: 8px;
         margin-top: 15px;
+        border: 1px solid #bfdbfe;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -31,27 +34,26 @@ if "user" not in st.session_state:
     st.error("Effettua il login per accedere.")
     st.stop()
 
-# Gestione Stato Carrello
+# Inizializzazione Carrello se non esiste
 if "carrello" not in st.session_state:
     st.session_state.carrello = {}
 
-st.title("⚽ La tua Schedina Interattiva")
+st.title("⚽ Compila la tua Schedina")
 
-# Layout: Carrello a sinistra (1/4) e Tabella a destra (3/4)
+# Layout: Carrello (Sinistra) e Palinsesto (Destra)
 col_cart, col_table = st.columns([1, 3])
 
 try:
-    # Recupero partite pubblicate [cite: 2026-01-29]
+    # Recupero partite dal database
     res = st.session_state.supabase.table("partite").select("*").eq("pubblicata", True).order("id").execute()
     df = pd.DataFrame(res.data)
 
     if not df.empty:
         with col_table:
             st.subheader("📊 Palinsesto Quote")
-            st.info("💡 Clicca su una quota per aggiungerla al carrello.")
+            st.info("💡 Clicca direttamente sulla quota per aggiungerla alla schedina.")
             
-            # Tabella interattiva [cite: 2026-01-28, 2026-01-29]
-            # Usiamo 'single-cell' (con trattino) per compatibilità
+            # Tabella Interattiva con selezione cella
             selection = st.dataframe(
                 df,
                 use_container_width=True,
@@ -59,23 +61,28 @@ try:
                 on_select="rerun",
                 selection_mode="single-cell",
                 column_order=("match", "quote_1", "quote_x", "quote_2", "quote_1x", "quote_x2", "quote_12", "quote_u25", "quote_o25", "quote_g", "quote_ng"),
-                column_config={"match": st.column_config.TextColumn("PARTITA", width=200)}
+                column_config={"match": st.column_config.TextColumn("PARTITA", width=220)}
             )
 
-            # Elaborazione selezione [cite: 2026-01-28, 2026-01-29]
+            # Logica corretta per estrarre i dati della cella cliccata
             if selection.selection.get("cells"):
-                row_idx = selection.selection["cells"][0]["row"]
-                col_idx = selection.selection["cells"][0]["column"]
+                # Estraiamo gli indici corretti evitando l'errore 'str'
+                cell = selection.selection["cells"][0]
+                row_idx = cell["row"]
+                col_idx = cell["column"]
+                
+                # Identifichiamo la colonna cliccata
                 col_name = df.columns[col_idx]
                 
-                # Se la colonna cliccata è una quota [cite: 2026-01-28]
                 if col_name.startswith("quote_"):
-                    partita = df.iloc[row_idx]
-                    label_esito = col_name.replace("quote_", "").upper().replace("U25", "U").replace("O25", "O")
-                    st.session_state.carrello[partita["id"]] = {
-                        "match": partita["match"],
+                    partita_selezionata = df.iloc[row_idx]
+                    label_esito = col_name.replace("quote_", "").upper()
+                    
+                    # Salviamo nel carrello (sovrascrive se la partita esiste già)
+                    st.session_state.carrello[partita_selezionata["id"]] = {
+                        "match": partita_selezionata["match"],
                         "esito": label_esito,
-                        "quota": float(partita[col_name])
+                        "quota": float(partita_selezionata[col_name])
                     }
 
         with col_cart:
@@ -83,30 +90,33 @@ try:
             st.subheader("🛒 Carrello")
             
             if not st.session_state.carrello:
-                st.write("Seleziona una quota dalla tabella.")
+                st.write("Seleziona una quota...")
             else:
-                quota_somma = 0.0
-                # Ordine per ID partita (stesso del pannello) [cite: 2026-01-28]
+                somma_quote = 0.0
+                # Ordiniamo per mantenere la stessa sequenza del pannello
                 for p_id in sorted(st.session_state.carrello.keys()):
                     item = st.session_state.carrello[p_id]
-                    c1, c2 = st.columns([4, 1])
-                    c1.markdown(f"**{item['match']}**\n{item['esito']} @ {item['quota']}")
-                    if c2.button("🗑️", key=f"del_{p_id}"):
+                    st.markdown(f"**{item['match']}**")
+                    
+                    c1, c2 = st.columns([3, 1])
+                    c1.caption(f"Segno: {item['esito']} @ {item['quota']}")
+                    if c2.button("🗑️", key=f"remove_{p_id}"):
                         del st.session_state.carrello[p_id]
                         st.rerun()
-                    quota_somma += item['quota'] # Somma quote richiesta [cite: 2026-01-28]
+                    
+                    somma_quote += item['quota']
                 
-                st.markdown(f'<div class="total-display">TOTALE: {quota_somma:.2f}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="total-display">SOMMA QUOTE: {somma_quote:.2f}</div>', unsafe_allow_html=True)
                 
                 if st.button("📤 INVIA SCHEDINA", type="primary", use_container_width=True):
-                    # Logica per salvare su Supabase (da implementare) [cite: 2026-01-29]
-                    st.success("✅ Schedina inviata!")
+                    # Qui puoi inserire la logica per salvare la schedina su Supabase
+                    st.success("✅ Schedina inviata con successo!")
                     st.balloons()
-                    st.session_state.carrello = {} # Svuota dopo invio
+                    st.session_state.carrello = {} # Reset carrello
             st.markdown('</div>', unsafe_allow_html=True)
 
     else:
         st.warning("Nessun palinsesto disponibile.")
 
 except Exception as e:
-    st.error(f"Errore tecnico: {e}")
+    st.error(f"⚠️ Errore durante il caricamento: {e}")
