@@ -11,7 +11,7 @@ if "supabase" not in st.session_state:
         st.secrets["supabase_key"]
     )
 
-# --- CSS PER L'INTERFACCIA ---
+# --- CSS DESIGN ---
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -22,9 +22,9 @@ st.markdown("""
 
 # --- FUNZIONE DI LOGOUT ---
 def logout_process():
-    for key in list(st.session_state.keys()):
-        if key != "supabase": # Teniamo solo la connessione al DB
-            del st.session_state[key]
+    # Rimuoviamo solo le chiavi legate all'utente per sicurezza
+    if "user" in st.session_state:
+        del st.session_state["user"]
     st.rerun()
 
 # --- SIDEBAR DINAMICA ---
@@ -32,13 +32,11 @@ st.sidebar.title("🏆 FantaSchedina")
 st.sidebar.page_link("app.py", label="Home / Login", icon="🏠")
 
 if "user" in st.session_state:
-    # Menu visibile solo se loggato
     st.sidebar.page_link("pages/1_Gioca.py", label="⚽ GIOCA ORA", icon="⚽")
     st.sidebar.divider()
     if st.sidebar.button("🚪 ESCI (Logout)", use_container_width=True):
         logout_process()
 else:
-    # Menu visibile se non loggato
     st.sidebar.page_link("pages/2_Registrazione.py", label="📝 Registrazione", icon="📩")
     st.sidebar.page_link("pages/3_Admin.py", label="🔐 Accesso Admin", icon="🕵️")
 
@@ -51,19 +49,27 @@ if "user" in st.session_state:
             📅 <b>Stato:</b> Account Attivo
         </div>
     """, unsafe_allow_html=True)
-    st.write("Scegli **'GIOCA ORA'** dal menu a sinistra per inserire i tuoi pronostici della settimana.")
+    st.write("Scegli **'GIOCA ORA'** dal menu a sinistra per inserire i tuoi pronostici.")
 else:
     st.title("⚽ FantaSchedina")
-    st.write("Accedi con le tue credenziali per iniziare a giocare.")
+    st.write("Accedi per iniziare a sfidare i tuoi amici.")
     
-    with st.form("login_form"):
+    # Login Form
+    with st.container():
         email = st.text_input("Email")
         pwd = st.text_input("Password", type="password")
-        if st.form_submit_button("ACCEDI", use_container_width=True):
-            try:
-                auth = st.session_state.supabase.auth.sign_in_with_password({"email": email, "password": pwd})
-                st.session_state.user = auth.user
-                st.success("Accesso riuscito! Reindirizzamento...")
-                st.rerun()
-            except:
-                st.error("Credenziali non valide. Riprova.")
+        if st.button("ACCEDI AL SISTEMA", type="primary", use_container_width=True):
+            if email and pwd:
+                try:
+                    # Tentativo di autenticazione [cite: 2026-01-28]
+                    auth_response = st.session_state.supabase.auth.sign_in_with_password({
+                        "email": email, 
+                        "password": pwd
+                    })
+                    # Salviamo l'utente e forziamo il ricaricamento immediato [cite: 2026-01-28]
+                    st.session_state.user = auth_response.user
+                    st.rerun() 
+                except Exception as e:
+                    st.error("Credenziali errate. Controlla email e password.")
+            else:
+                st.warning("Inserisci sia email che password.")
