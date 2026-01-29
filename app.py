@@ -3,7 +3,7 @@ from supabase import create_client
 
 st.set_page_config(page_title="FantaSchedina", layout="centered")
 
-# CSS per nascondere il menu automatico e pulire lo stile
+# --- CSS PER BLOCCO MENU AUTOMATICO E STILE PULITO ---
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -11,10 +11,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Inizializzazione sessione
-if "user" not in st.session_state: st.session_state.user = None
+# Inizializzazione Supabase e Sessione
+if "supabase" not in st.session_state:
+    st.session_state.supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+if "user" not in st.session_state: 
+    st.session_state.user = None
 
-# --- MENU LATERALE RICHIESTO ---
+# --- MENU LATERALE FISSO ---
 st.sidebar.title("🏆 Menu Principale")
 st.sidebar.page_link("app.py", label="Home / Login", icon="👤")
 st.sidebar.page_link("pages/2_Registrazione.py", label="Registrazione Utente", icon="📝")
@@ -22,9 +25,22 @@ st.sidebar.page_link("pages/3_Admin.py", label="Accesso Admin", icon="🔐")
 
 # --- CONTENUTO HOME ---
 st.title("Benvenuto su FantaSchedina")
-with st.form("login_form"):
-    st.subheader("Login Utente")
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
-    if st.form_submit_button("ACCEDI"):
-        st.info("Logica di accesso in corso...")
+
+if st.session_state.user is None:
+    with st.form("login_form"):
+        st.subheader("Login Utente")
+        email = st.text_input("Email")
+        password = st.text_input("Password", type="password")
+        if st.form_submit_button("ACCEDI"):
+            try:
+                res = st.session_state.supabase.auth.sign_in_with_password({"email": email, "password": password})
+                st.session_state.user = res.user
+                st.success("Accesso effettuato!")
+                st.rerun()
+            except:
+                st.error("Credenziali non valide.")
+else:
+    st.success(f"Loggato come: {st.session_state.user.email}")
+    if st.sidebar.button("Logout 🚪"):
+        st.session_state.user = None
+        st.rerun()
