@@ -1,77 +1,99 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="La tua Schedina", layout="wide")
+st.set_page_config(page_title="Gioca Schedina", layout="wide")
 
+# CSS per nascondere menu e scrollbar
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
     .stDataEditor { width: 100% !important; }
-    /* Nasconde scrollbar inutili */
-    .stDataEditor div[data-testid="stTable"] { overflow: hidden !important; }
+    .cart-box { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
+    .total-box { font-size: 20px; font-weight: bold; color: #1e3c72; margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-st.sidebar.page_link("app.py", label="Torna alla Home", icon="🏠")
-
 if "user" not in st.session_state:
-    st.error("Esegui il login per giocare.")
+    st.error("Effettua il login dalla Home.")
     st.stop()
 
-st.title("📝 Compila la Schedina")
+# Inizializzazione Carrello
+if "carrello" not in st.session_state:
+    st.session_state.carrello = {}
+
+st.title("⚽ Compila la tua Schedina")
+
+# Layout a due colonne: Carrello (Sinistra) e Tabella (Destra)
+col_cart, col_table = st.columns([1, 3])
 
 try:
-    # Recupero partite pubblicate [cite: 2026-01-29]
     res = st.session_state.supabase.table("partite").select("*").eq("pubblicata", True).order("giornata").execute()
     df = pd.DataFrame(res.data)
 
     if not df.empty:
-        st.write(f"### 📊 Palinsesto Giornata {df['giornata'].iloc[0]}")
-        
-        # TABELLA QUOTE SOLA LETTURA (Stile Admin) [cite: 2026-01-29]
-        st.data_editor(
-            df,
-            use_container_width=True,
-            hide_index=True,
-            disabled=True,
-            column_order=("match", "quote_1", "quote_x", "quote_2", "quote_1x", "quote_x2", "quote_12", "quote_u25", "quote_o25", "quote_g", "quote_ng"),
-            column_config={
-                "match": st.column_config.TextColumn("PARTITA", width=180),
-                "quote_1": st.column_config.NumberColumn("1", width=42),
-                "quote_x": st.column_config.NumberColumn("X", width=42),
-                "quote_2": st.column_config.NumberColumn("2", width=42),
-                "quote_1x": st.column_config.NumberColumn("1X", width=42),
-                "quote_x2": st.column_config.NumberColumn("X2", width=42),
-                "quote_12": st.column_config.NumberColumn("12", width=42),
-                "quote_u25": st.column_config.NumberColumn("U", width=40),
-                "quote_o25": st.column_config.NumberColumn("O", width=40),
-                "quote_g": st.column_config.NumberColumn("G", width=40),
-                "quote_ng": st.column_config.NumberColumn("NG", width=40),
-            }
-        )
-
-        st.divider()
-        st.subheader("✍️ Inserisci i Pronostici")
-        
-        pronostici = {}
-        for _, p in df.iterrows():
-            st.write(f"**{p['match']}**")
-            pronostici[p['id']] = st.segmented_control(
-                "Scegli:", 
-                options=["1", "X", "2", "1X", "X2", "12", "U", "O", "G", "NG"], 
-                key=f"match_{p['id']}",
-                label_visibility="collapsed"
+        with col_table:
+            st.subheader("📊 Seleziona le Quote")
+            st.info("💡 Clicca su una quota per aggiungerla alla schedina.")
+            
+            # Mostriamo la tabella. Rileviamo la selezione dell'utente.
+            event = st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True,
+                on_select="rerun",
+                selection_mode="single_cell", # L'utente clicca una singola quota
+                column_order=("match", "quote_1", "quote_x", "quote_2", "quote_1x", "quote_x2", "quote_12", "quote_u25", "quote_o25", "quote_g", "quote_ng"),
+                column_config={"match": st.column_config.TextColumn("PARTITA", width=180)}
             )
-            st.markdown("---")
 
-        if st.button("🚀 INVIA SCHEDINA", type="primary", use_container_width=True):
-            if None not in pronostici.values():
-                # Qui aggiungerai la logica di inserimento nella tabella 'pronostici' [cite: 2026-01-29]
-                st.balloons()
-                st.success("Schedina inviata!")
+            # Logica di aggiunta al carrello [cite: 2026-01-28]
+            selected_cells = event.selection.get("cells", [])
+            if selected_cells:
+                row_idx = selected_cells[0][0]
+                col_name = df.columns[selected_cells[0][1]]
+                
+                if col_name.startswith("quote_"):
+                    partita = df.iloc[row_idx]
+                    label_esito = col_name.replace("quote_", "").upper()
+                    valore_quota = partita[col_name]
+                    
+                    # Aggiungiamo o aggiorniamo il pronostico nel carrello
+                    st.session_state.carrello[partita["id"]] = {
+                        "match": partita["match"],
+                        "esito": label_esito,
+                        "quota": valore_quota
+                    }
+
+        with col_cart:
+            st.markdown('<div class="cart-box">', unsafe_allow_html=True)
+            st.subheader("🛒 Il tuo Carrello")
+            
+            if not st.session_state.carrello:
+                st.write("Nessun evento selezionato.")
             else:
-                st.error("⚠️ Pronostica tutte le partite!")
+                quota_totale = 0
+                # Ordiniamo il carrello come nel pannello (per match) [cite: 2026-01-28]
+                for p_id in sorted(st.session_state.carrello.keys()):
+                    item = st.session_state.carrello[p_id]
+                    st.write(f"**{item['match']}**")
+                    st.caption(f"Segno: {item['esito']} @ {item['quota']}")
+                    quota_totale += item['quota'] # Somma delle quote richiesta [cite: 2026-01-28]
+                    
+                    if st.button("❌", key=f"del_{p_id}"):
+                        del st.session_state.carrello[p_id]
+                        st.rerun()
+                
+                st.divider()
+                st.markdown(f'<div class="total-box">Somma Quote: {quota_totale:.2f}</div>', unsafe_allow_html=True)
+                
+                if st.button("📤 INVIA SCHEDINA", type="primary", use_container_width=True):
+                    # Logica salvataggio su Supabase [cite: 2026-01-28]
+                    st.success("Schedina inviata!")
+                    st.balloons()
+                    st.session_state.carrello = {} # Svuota carrello dopo invio
+            st.markdown('</div>', unsafe_allow_html=True)
+
     else:
-        st.warning("Nessuna partita pubblicata.")
+        st.warning("Nessun palinsesto live.")
 except Exception as e:
-    st.error(f"Errore caricamento: {e}")
+    st.error(f"Errore: {e}")
