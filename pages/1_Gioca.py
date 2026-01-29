@@ -1,100 +1,88 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="La tua Schedina", layout="wide")
+st.set_page_config(page_title="Gioca Schedina", layout="wide")
 
-# CSS per pulire la tabella e colorare i tasti selezionati
+# CSS per rendere tutto microscopico e ordinato nella sidebar
 st.markdown("""
     <style>
-    /* Colore Giallo per i tasti cliccati */
+    /* Colore Giallo per i tasti selezionati nel palinsesto */
     .stButton > button[kind="primary"] {
         background-color: #ffc107 !important;
         color: black !important;
-        border: none !important;
         font-weight: bold !important;
     }
-    /* Rimpiccioliamo i tasti del palinsesto per farli stare in riga */
-    .stButton > button {
-        padding: 2px 5px !important;
-        height: 30px !important;
+    /* Stile per la riga della schedina nella sidebar */
+    .sidebar-item {
+        font-size: 11px;
+        line-height: 1.2;
+        padding: 5px;
+        background: #ffffff10;
+        border-radius: 5px;
+        margin-bottom: 2px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 if "user" not in st.session_state:
-    st.warning("Effettua il login per giocare.")
     st.stop()
 
 if "carrello" not in st.session_state:
     st.session_state.carrello = {}
 
-# --- PARTE 1: IL CARRELLO NELLA ZONA GRIGIA (SIDEBAR) ---
+# --- SIDEBAR: CARRELLO COMPATTO ---
 with st.sidebar:
-    st.markdown("## 🛒 La tua Schedina")
-    st.divider()
+    st.markdown("### 📋 La tua Giocata")
     
-    if not st.session_state.carrello:
-        st.info("Seleziona le quote dal palinsesto per comporre la schedina.")
-    else:
-        somma_quote = 0.0
-        # Mostriamo ogni partita selezionata nel menu grigio
-        for p_id in sorted(st.session_state.carrello.keys()):
-            item = st.session_state.carrello[p_id]
-            with st.container():
-                st.markdown(f"**{item['match']}**")
-                c1, c2 = st.columns([3, 1])
-                c1.caption(f"{item['esito']} @ {item['quota']}")
-                if c2.button("🗑️", key=f"side_del_{p_id}"):
+    # Sezione a scorrimento limitato per non coprire il menu [cite: 2026-01-29]
+    with st.container():
+        if not st.session_state.carrello:
+            st.caption("Vuota")
+        else:
+            somma_quote = 0.0
+            for p_id in sorted(st.session_state.carrello.keys()):
+                item = st.session_state.carrello[p_id]
+                # Visualizzazione su una sola riga per risparmiare spazio [cite: 2026-01-29]
+                col1, col2 = st.columns([4, 1])
+                col1.markdown(f"<div class='sidebar-item'>{item['match'][:15]}.. <b>{item['esito']}</b> @{item['quota']}</div>", unsafe_allow_html=True)
+                if col2.button("❌", key=f"side_del_{p_id}"):
                     del st.session_state.carrello[p_id]
                     st.rerun()
                 somma_quote += item['quota']
-            st.divider()
-        
-        # Totale e tasto invio in fondo al menu grigio
-        st.markdown(f"### TOTALE: {somma_quote:.2f}")
-        if st.button("🚀 INVIA SCHEDINA", type="primary", use_container_width=True):
-            st.success("Schedina registrata!")
-            st.session_state.carrello = {}
-            st.rerun()
+            
+            st.markdown(f"**TOTALE: {somma_quote:.2f}**")
+            if st.button("🚀 INVIA", type="primary", use_container_width=True):
+                st.success("Inviata!")
+                st.session_state.carrello = {}
+                st.rerun()
+    
+    st.divider() # Qui sotto Streamlit mostrerà automaticamente i pulsanti delle pagine
 
-# --- PARTE 2: IL PALINSESTO NELLA ZONA BIANCA ---
-st.title("⚽ Compila la tua Schedina")
+# --- MAIN: PALINSESTO ---
+st.title("⚽ Palinsesto Giornata")
 
 try:
     res = st.session_state.supabase.table("partite").select("*").eq("pubblicata", True).order("id").execute()
     partite = res.data
 
     if partite:
-        st.subheader("📊 Palinsesto Giornata")
-        # Header Tabella
-        h = st.columns([2.5, 1, 1, 1, 1, 1, 1])
-        cols_labels = ["MATCH", "1", "X", "2", "U", "O", "G"]
-        for i, label in enumerate(cols_labels):
-            h[i].markdown(f"**{label}**")
-        st.divider()
-
-        # Righe Partite
+        # Header ultra-sottile
+        h = st.columns([2, 1, 1, 1, 1, 1, 1])
+        for i, l in enumerate(["MATCH", "1", "X", "2", "U", "O", "G"]): h[i].caption(f"**{l}**")
+        
         for p in partite:
-            r = st.columns([2.5, 1, 1, 1, 1, 1, 1])
+            r = st.columns([2, 1, 1, 1, 1, 1, 1])
             r[0].write(f"**{p['match']}**")
             
-            # Generazione tasti quote
             for i, q_key in enumerate(['quote_1', 'quote_x', 'quote_2', 'quote_u25', 'quote_o25', 'quote_g']):
                 val = p[q_key]
                 tipo = q_key.replace("quote_", "").upper().replace("U25", "U").replace("O25", "O")
                 
-                # Controllo se è selezionato per cambiare colore in GIALLO
-                is_sel = (p['id'] in st.session_state.carrello and 
-                           st.session_state.carrello[p['id']]['esito'] == tipo)
+                # Feedback visivo: GIALLO se cliccato [cite: 2026-01-29]
+                is_sel = (p['id'] in st.session_state.carrello and st.session_state.carrello[p['id']]['esito'] == tipo)
                 
-                if r[i+1].button(str(val), key=f"main_q_{p['id']}_{q_key}", 
-                                 type="primary" if is_sel else "secondary"):
-                    st.session_state.carrello[p['id']] = {
-                        "match": p['match'], "esito": tipo, "quota": float(val)
-                    }
+                if r[i+1].button(str(val), key=f"q_{p['id']}_{q_key}", type="primary" if is_sel else "secondary"):
+                    st.session_state.carrello[p['id']] = {"match": p['match'], "esito": tipo, "quota": float(val)}
                     st.rerun()
-    else:
-        st.info("In attesa di pubblicazione del palinsesto.")
-
 except Exception as e:
-    st.error(f"Errore tecnico: {e}")
+    st.error(f"Errore: {e}")
