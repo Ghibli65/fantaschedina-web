@@ -1,89 +1,98 @@
 import streamlit as st
 import os
+import base64
 
 # 1. Configurazione Pagina
-st.set_page_config(page_title="FantaSchedina - Login", layout="wide")
+st.set_page_config(page_title="FantaSchedina Login", layout="wide")
 
-# 2. CSS Avanzato per distanziare i loghi e pulire il fondo
-st.markdown("""
+# Funzione per leggere le immagini e convertirle in formato web (Base64)
+def get_base64_image(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    return None
+
+logo1_b64 = get_base64_image("logo1.png") # Ghiandaia
+logo2_b64 = get_base64_image("logo2.png") # Acquarossa
+
+# 2. CSS "HARD" per bloccare la grafica
+st.markdown(f"""
     <style>
-    /* Fondo azzurro polvere/grigio professionale */
-    .stApp { background-color: #f8fafc; }
+    /* Sfondo e Pulizia */
+    .stApp {{ background-color: #f0f4f8; }}
+    [data-testid="stSidebarNav"] {{display: none;}}
+
+    /* POSIZIONAMENTO LOGO 1 (ALTO) */
+    .logo-top {{
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+    }}
+
+    /* POSIZIONAMENTO LOGO 2 (BASSO) */
+    .logo-bottom {{
+        position: fixed;
+        bottom: 30px;
+        left: 20px;
+        width: 120px;
+        z-index: 999;
+    }}
+
+    /* Centratura Modulo Login */
+    .login-container {{
+        background-color: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        margin-top: 50px;
+    }}
     
-    /* Nasconde il menu di navigazione automatico */
-    [data-testid="stSidebarNav"] {display: none;}
-
-    /* Centratura del modulo di login */
-    .auth-container {
-        max-width: 400px;
-        margin: auto;
-        padding-top: 50px;
-    }
-
-    /* Stile Sidebar per bloccare i loghi */
-    section[data-testid="stSidebar"] > div {
-        display: flex;
-        flex-direction: column;
-        justify-content:空间-between;
-        height: 100vh;
-    }
-
-    /* Bottone Login Giallo */
-    .stButton > button[kind="primary"] {
-        background-color: #fbbf24 !important;
+    /* Bottone Giallo Professionale */
+    .stButton > button {{
+        background-color: #ffc107 !important;
         color: black !important;
         font-weight: bold !important;
+        border-radius: 10px !important;
+        height: 45px !important;
         border: none !important;
-        width: 100% !important;
-    }
+    }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- SIDEBAR CON LOGHI DISTANZIATI ---
+# --- SIDEBAR FISSA ---
 with st.sidebar:
-    # PARTE ALTA: Logo Ghiandaia e Titolo
-    st.markdown("<br>", unsafe_allow_html=True)
-    if os.path.exists("logo1.png"):
-        st.image("logo1.png", use_container_width=True)
+    # Logo 1 (Ghiandaia) inserito via HTML per controllo totale
+    if logo1_b64:
+        st.markdown(f'<img src="data:image/png;base64,{logo1_b64}" class="logo-top">', unsafe_allow_html=True)
     else:
         st.title("🏆 FantaSchedina")
     
-    st.markdown("---")
+    st.markdown("<br><br><br><br><br><br>", unsafe_allow_html=True) # Spazio per il logo in alto
     
-    # Navigazione
-    if st.button("🏠 Home / Login", type="primary", use_container_width=True):
-        st.switch_page("app.py")
-    if st.button("⚽ Gioca Ora", use_container_width=True):
-        st.switch_page("pages/1_Gioca.py")
+    # Menu Navigazione
+    st.markdown("### Menu")
+    if st.button("🏠 Home / Login", use_container_width=True): st.rerun()
+    if st.button("⚽ Vai al Gioco", use_container_width=True): st.switch_page("pages/1_Gioca.py")
     
-    # Spazio flessibile per spingere il secondo logo in fondo
-    st.write("") # placeholder
-    
-    # PARTE BASSA: Logo Acquarossa (Circolare)
-    # Usiamo un container per posizionarlo fisso in basso
-    with st.container():
-        st.markdown("<br><br><br><br>", unsafe_allow_html=True) # Spinta extra
-        if os.path.exists("logo2.png"):
-            st.image("logo2.png", width=150)
-        st.caption("Developed by Acquarossa • 2026")
+    # Logo 2 (Acquarossa) bloccato in fondo
+    if logo2_b64:
+        st.markdown(f'<img src="data:image/png;base64,{logo2_b64}" class="logo-bottom">', unsafe_allow_html=True)
 
-# --- CORPO CENTRALE (LOGIN) ---
-col1, col_center, col3 = st.columns([1, 1.2, 1])
+# --- AREA CENTRALE ---
+c1, main_col, c3 = st.columns([1, 1.2, 1])
 
-with col_center:
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    # Logo centrale se vuoi rinforzare il brand (opzionale)
-    st.markdown("<h1 style='text-align: center; color: #1e293b;'>BENVENUTO</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #64748b;'>Inserisci le tue credenziali per entrare</p>", unsafe_allow_html=True)
+with main_col:
+    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #1e3c72;'>Area Accesso</h2>", unsafe_allow_html=True)
     
-    # Box di Login pulito
-    with st.container(border=True):
-        st.markdown("### Area Accesso")
-        email = st.text_input("Indirizzo Email")
-        password = st.text_input("Password", type="password")
-        
-        if st.button("ENTRA NEL CAMPIONATO", type="primary", use_container_width=True):
-            # Qui andrà il collegamento a Supabase
-            st.info("Verifica in corso...")
-
-    st.markdown("<p style='text-align: center; font-size: 11px; color: #94a3b8; margin-top: 20px;'>FantaSchedina Professional v2.0</p>", unsafe_allow_html=True)
+    email = st.text_input("Indirizzo Email")
+    password = st.text_input("Password", type="password")
+    
+    if st.button("ENTRA NEL CAMPIONATO", use_container_width=True):
+        # Collegamento database
+        st.info("Accesso in corso...")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 11px; margin-top: 20px;'>FantaSchedina v2.0 - Professional Edition</p>", unsafe_allow_html=True)
