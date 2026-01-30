@@ -1,38 +1,15 @@
 import streamlit as st
 
-# Configurazione della pagina
-st.set_page_config(page_title="FantaSchedina - Home", layout="wide")
+# Configurazione minima
+st.set_page_config(page_title="Sblocco FantaSchedina", layout="wide")
 
-# CSS di ieri: Sfondo pulito e bottoni gialli
-st.markdown("""
-    <style>
-    [data-testid="stSidebarNav"] {display: none;}
-    .stButton > button[kind="primary"] {
-        background-color: #ffc107 !important;
-        color: black !important;
-        font-weight: bold !important;
-        border: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Rimuoviamo ogni riga di CSS o HTML che può dare errore
+st.title("SISTEMA RIPRISTINATO ✅")
+st.write("Se vedi questa scritta, l'app si è sbloccata.")
 
-# SIDEBAR
 with st.sidebar:
-    st.markdown("## 🏆 FantaSchedina")
-    st.divider()
-    if st.button("🏠 Home", use_container_width=True, type="primary"):
-        st.switch_page("app.py")
-    if st.button("⚽ Gioca", use_container_width=True):
+    st.header("Menu Tecnico")
+    if st.button("VAI AL GIOCO"):
         st.switch_page("pages/1_Gioca.py")
 
-# AREA LOGIN
-st.markdown("<br><br>", unsafe_allow_html=True)
-col_l, col_main, col_r = st.columns([1, 1.2, 1])
-
-with col_main:
-    st.markdown("<h1 style='text-align: center;'>BENVENUTO</h1>", unsafe_allow_html=True)
-    with st.container(border=True):
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
-        if st.button("ACCEDI", use_container_width=True, type="primary"):
-            st.success("Accesso in corso...")
+st.info("Dopo che vedi questa pagina, potrai rimettere il codice di ieri.")
