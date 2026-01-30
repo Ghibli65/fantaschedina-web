@@ -2,12 +2,12 @@ import streamlit as st
 
 st.set_page_config(page_title="Palinsesto", layout="wide")
 
-# CSS di ieri: Sidebar bloccata e bottoni quote compatti [cite: 2026-01-29]
+# CSS di ieri: Sidebar bloccata e bottoni quote compatti
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
     section[data-testid="stSidebar"] > div { position: fixed; width: inherit; }
-    .stButton > button { height: 30px !important; font-size: 11px !important; border-radius: 4px !important; }
+    .stButton > button { height: 32px !important; font-size: 12px !important; border-radius: 4px !important; }
     .stButton > button[kind="primary"] { background-color: #ffc107 !important; color: black !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -15,7 +15,7 @@ st.markdown("""
 if "carrello" not in st.session_state:
     st.session_state.carrello = {}
 
-# SIDEBAR: SCHEDINA FISSA [cite: 2026-01-29]
+# SIDEBAR: SCHEDINA FISSA
 with st.sidebar:
     st.header("📋 La tua Giocata")
     if not st.session_state.carrello:
@@ -30,19 +30,20 @@ with st.sidebar:
                 st.rerun()
             moltiplicatore *= item['quota']
         st.divider()
-        st.subheader(f"MOLTIPLICATORE: {moltiplicatore:.2f}")
+        st.subheader(f"TOTALE: {moltiplicatore:.2f}")
         if st.button("🚀 INVIA GIOCATA", type="primary", use_container_width=True):
             st.success("Schedina registrata!")
 
-# PALINSESTO A 11 COLONNE [cite: 2026-01-29]
-st.title("⚽ Palinsesto Professionale")
+# PALINSESTO PROFESSIONALE
+st.title("⚽ Palinsesto Giornata")
 
-# Dati temporanei (stasera caricheremo quelli dal database)
+# Dati temporanei (stasera useremo quelli dal database)
 partite = [
-    {"id": 1, "match": "Lazio - Genoa", "1": 2.1, "X": 3.1, "2": 3.8, "1X": 1.3, "X2": 1.7, "12": 1.3, "U": 1.8, "O": 1.9, "G": 1.7, "NG": 2.1}
+    {"id": 1, "match": "Lazio - Genoa", "1": 2.1, "X": 3.1, "2": 3.8, "1X": 1.3, "X2": 1.7, "12": 1.3, "U": 1.8, "O": 1.9, "G": 1.7, "NG": 2.1},
+    {"id": 2, "match": "Pisa - Sassuolo", "1": 2.95, "X": 3.1, "2": 2.5, "1X": 1.5, "X2": 1.4, "12": 1.3, "U": 1.6, "O": 2.1, "G": 1.8, "NG": 1.9}
 ]
 
-# Header Tabella [cite: 2026-01-29]
+# Header Tabella
 cols_size = [2.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 h = st.columns(cols_size)
 labels = ["MATCH", "1", "X", "2", "1X", "X2", "12", "U2.5", "O2.5", "G", "NG"]
