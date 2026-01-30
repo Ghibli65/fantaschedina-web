@@ -2,12 +2,12 @@ import streamlit as st
 
 st.set_page_config(page_title="Palinsesto", layout="wide")
 
-# CSS di ieri: Sidebar Fissa e Tabella Compatta [cite: 2026-01-29]
+# CSS di ieri: Sidebar bloccata e bottoni quote compatti [cite: 2026-01-29]
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
     section[data-testid="stSidebar"] > div { position: fixed; width: inherit; }
-    .stButton > button { height: 30px !important; font-size: 11px !important; }
+    .stButton > button { height: 30px !important; font-size: 11px !important; border-radius: 4px !important; }
     .stButton > button[kind="primary"] { background-color: #ffc107 !important; color: black !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -15,38 +15,38 @@ st.markdown("""
 if "carrello" not in st.session_state:
     st.session_state.carrello = {}
 
-# SIDEBAR: SCHEDINA BLOCCATA [cite: 2026-01-29]
+# SIDEBAR: SCHEDINA FISSA [cite: 2026-01-29]
 with st.sidebar:
-    st.header("📋 Schedina")
+    st.header("📋 La tua Giocata")
     if not st.session_state.carrello:
-        st.caption("Seleziona quote...")
+        st.info("Seleziona le quote")
     else:
-        quota_totale = 1.0
+        moltiplicatore = 1.0
         for p_id, item in list(st.session_state.carrello.items()):
             c1, c2 = st.columns([4, 1])
             c1.markdown(f"**{item['match'][:15]}**\n{item['esito']} @{item['quota']}")
             if c2.button("❌", key=f"del_{p_id}"):
                 del st.session_state.carrello[p_id]
                 st.rerun()
-            quota_totale *= item['quota']
+            moltiplicatore *= item['quota']
         st.divider()
-        st.subheader(f"MOLTIPLICATORE: {quota_totale:.2f}")
+        st.subheader(f"MOLTIPLICATORE: {moltiplicatore:.2f}")
         if st.button("🚀 INVIA GIOCATA", type="primary", use_container_width=True):
-            st.success("Giocata inviata!")
+            st.success("Schedina registrata!")
 
-# MAIN: PALINSESTO COMPLETO [cite: 2026-01-29]
+# PALINSESTO A 11 COLONNE [cite: 2026-01-29]
 st.title("⚽ Palinsesto Professionale")
 
-# Dati di esempio (verranno sostituiti dal DB stasera)
+# Dati temporanei (stasera caricheremo quelli dal database)
 partite = [
     {"id": 1, "match": "Lazio - Genoa", "1": 2.1, "X": 3.1, "2": 3.8, "1X": 1.3, "X2": 1.7, "12": 1.3, "U": 1.8, "O": 1.9, "G": 1.7, "NG": 2.1}
 ]
 
-# Header a 11 colonne [cite: 2026-01-29]
+# Header Tabella [cite: 2026-01-29]
 cols_size = [2.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 h = st.columns(cols_size)
-headers = ["MATCH", "1", "X", "2", "1X", "X2", "12", "U2.5", "O2.5", "G", "NG"]
-for i, txt in enumerate(headers): h[i].caption(f"**{txt}**")
+labels = ["MATCH", "1", "X", "2", "1X", "X2", "12", "U2.5", "O2.5", "G", "NG"]
+for i, l in enumerate(labels): h[i].caption(f"**{l}**")
 
 for p in partite:
     r = st.columns(cols_size)
