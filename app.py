@@ -1,15 +1,44 @@
 import streamlit as st
+from supabase import create_client
 
-# Configurazione minima
-st.set_page_config(page_title="Sblocco FantaSchedina", layout="wide")
+st.set_page_config(page_title="Test Connessione", layout="wide")
 
-# Rimuoviamo ogni riga di CSS o HTML che può dare errore
-st.title("SISTEMA RIPRISTINATO ✅")
-st.write("Se vedi questa scritta, l'app si è sbloccata.")
+# Funzione per inizializzare Supabase [cite: 2026-01-29]
+def init_connection():
+    url = st.secrets.get("supabase_url")
+    key = st.secrets.get("supabase_key")
+    if not url or not key:
+        st.error("⚠️ Mancano le chiavi nei Secrets di Streamlit!")
+        return None
+    return create_client(url, key)
 
-with st.sidebar:
-    st.header("Menu Tecnico")
-    if st.button("VAI AL GIOCO"):
-        st.switch_page("pages/1_Gioca.py")
+# Prova a connetterti
+if "supabase" not in st.session_state:
+    st.session_state.supabase = init_connection()
 
-st.info("Dopo che vedi questa pagina, potrai rimettere il codice di ieri.")
+if st.session_state.supabase:
+    st.success("✅ Connessione a Supabase riuscita! L'URL è corretto.")
+    
+    st.title("⚽ FantaSchedina")
+    
+    # Form di Login semplice
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    
+    if st.button("ENTRA", type="primary"):
+        try:
+            # Tentativo di login [cite: 2026-01-29]
+            res = st.session_state.supabase.auth.sign_in_with_password({
+                "email": email, 
+                "password": password
+            })
+            st.session_state.user = res.user
+            st.rerun()
+        except Exception as e:
+            st.error(f"Credenziali non valide o errore: {e}")
+
+if "user" in st.session_state:
+    st.write(f"Benvenuto, {st.session_state.user.email}!")
+    if st.button("Logout"):
+        del st.session_state["user"]
+        st.rerun()
