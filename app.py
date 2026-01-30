@@ -1,36 +1,58 @@
 import streamlit as st
+from supabase import create_client
 
-st.set_page_config(page_title="FantaSchedina - Home", layout="wide")
+st.set_page_config(page_title="FantaSchedina", layout="wide")
 
-# CSS per i bottoni GIALLI e la pulizia sidebar [cite: 2026-01-29]
+# --- CONNESSIONE ROBUSTA ---
+if "supabase" not in st.session_state:
+    try:
+        url = st.secrets.get("supabase_url", "").strip()
+        key = st.secrets.get("supabase_key", "").strip()
+        
+        if not url.startswith("https://"):
+            st.error("❌ L'URL di Supabase non è valido. Deve iniziare con 'https://'. Controlla i Secrets!")
+            st.stop()
+            
+        st.session_state.supabase = create_client(url, key)
+    except Exception as e:
+        st.error(f"❌ Errore critico di configurazione: {e}")
+        st.stop()
+
+# --- CSS ---
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
-    .stButton > button[kind="primary"] {
-        background-color: #ffc107 !important;
-        color: black !important;
-        font-weight: bold !important;
-        border: none !important;
-    }
+    .stPageLink {background-color: #f0f2f6; border-radius: 8px; margin-bottom: 5px;}
     </style>
     """, unsafe_allow_html=True)
 
-with st.sidebar:
-    st.markdown("## 🏆 FantaSchedina")
-    st.divider()
-    if st.button("🏠 Home / Login", use_container_width=True, type="primary"):
+# --- SIDEBAR ---
+st.sidebar.title("🏆 Menu")
+st.sidebar.page_link("app.py", label="Home / Login", icon="🏠")
+
+if "user" in st.session_state:
+    st.sidebar.page_link("pages/1_Gioca.py", label="⚽ GIOCA ORA", icon="⚽")
+    if st.sidebar.button("🚪 ESCI", use_container_width=True):
+        del st.session_state["user"]
         st.rerun()
-    if st.button("⚽ Gioca Ora", use_container_width=True):
-        st.switch_page("pages/1_Gioca.py")
+else:
+    st.sidebar.page_link("pages/2_Registrazione.py", label="📝 Registrazione", icon="📩")
+    st.sidebar.page_link("pages/3_Admin.py", label="🔐 Accesso Admin", icon="🕵️")
 
-# Layout Login [cite: 2026-01-29]
-st.markdown("<br><br>", unsafe_allow_html=True)
-_, col_mid, _ = st.columns([1, 1.2, 1])
-
-with col_mid:
-    st.markdown("<h1 style='text-align: center;'>BENVENUTO</h1>", unsafe_allow_html=True)
-    with st.container(border=True):
-        st.text_input("Indirizzo Email")
-        st.text_input("Password", type="password")
-        if st.button("ENTRA NEL CAMPIONATO", use_container_width=True, type="primary"):
-            st.info("Verifica credenziali...")
+# --- LOGIC LOGIN ---
+if "user" in st.session_state:
+    st.title("✅ Sei dentro!")
+    st.success(f"Utente: {st.session_state.user.email}")
+    st.write("Vai su **GIOCA ORA** nel menu a sinistra.")
+else:
+    st.title("⚽ Accedi a FantaSchedina")
+    with st.container():
+        email = st.text_input("Email")
+        pwd = st.text_input("Password", type="password")
+        if st.button("ENTRA", type="primary", use_container_width=True):
+            try:
+                auth = st.session_state.supabase.auth.sign_in_with_password({"email": email, "password": pwd})
+                st.session_state.user = auth.user
+                st.rerun()
+            except Exception as e:
+                st.error(f"Accesso negato: {e}")
