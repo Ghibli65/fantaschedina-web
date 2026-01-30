@@ -3,7 +3,7 @@ import streamlit as st
 # Configurazione della pagina
 st.set_page_config(page_title="FantaSchedina - Home", layout="wide")
 
-# CSS di ieri: Sfondo chiaro, bottoni gialli e sidebar ordinata [cite: 2026-01-29]
+# CSS di ieri: Sfondo pulito e bottoni gialli
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -13,11 +13,10 @@ st.markdown("""
         font-weight: bold !important;
         border: none !important;
     }
-    .main { background-color: #f8fafc; }
     </style>
     """, unsafe_allow_html=True)
 
-# SIDEBAR [cite: 2026-01-29]
+# SIDEBAR
 with st.sidebar:
     st.markdown("## 🏆 FantaSchedina")
     st.divider()
@@ -26,7 +25,7 @@ with st.sidebar:
     if st.button("⚽ Gioca", use_container_width=True):
         st.switch_page("pages/1_Gioca.py")
 
-# AREA LOGIN CENTRATA [cite: 2026-01-29]
+# AREA LOGIN
 st.markdown("<br><br>", unsafe_allow_html=True)
 col_l, col_main, col_r = st.columns([1, 1.2, 1])
 
