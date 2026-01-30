@@ -1,129 +1,89 @@
 import streamlit as st
-import pandas as pd
+import os
 
-# 1. Configurazione Pagina (Wide è fondamentale)
-st.set_page_config(page_title="Palinsesto", layout="wide", initial_sidebar_state="expanded")
+# 1. Configurazione Pagina
+st.set_page_config(page_title="FantaSchedina - Login", layout="wide")
 
-# 2. CSS Professionale: Compattazione estrema e Sidebar Fissa
+# 2. CSS Avanzato per distanziare i loghi e pulire il fondo
 st.markdown("""
     <style>
-    /* Nasconde menu standard */
-    [data-testid="stSidebarNav"] {display: none;}
+    /* Fondo azzurro polvere/grigio professionale */
+    .stApp { background-color: #f8fafc; }
     
-    /* Rimpicciolisce i font di tutta la pagina */
-    html, body, [class*="css"] { font-size: 13px !important; }
+    /* Nasconde il menu di navigazione automatico */
+    [data-testid="stSidebarNav"] {display: none;}
 
-    /* SIDEBAR FISSA E STRETTA */
-    section[data-testid="stSidebar"] {
-        width: 240px !important;
-        background-color: #f1f5f9 !important;
+    /* Centratura del modulo di login */
+    .auth-container {
+        max-width: 400px;
+        margin: auto;
+        padding-top: 50px;
     }
+
+    /* Stile Sidebar per bloccare i loghi */
     section[data-testid="stSidebar"] > div {
-        position: fixed;
-        width: 240px;
+        display: flex;
+        flex-direction: column;
+        justify-content:空间-between;
+        height: 100vh;
     }
 
-    /* TABELLA QUOTE COMPATTA */
-    .stButton > button {
-        width: 100% !important;
-        padding: 2px !important;
-        height: 26px !important;
-        font-size: 11px !important;
-        border-radius: 4px !important;
-        border: 1px solid #e2e8f0 !important;
-    }
-    /* Colore Giallo Selezione */
+    /* Bottone Login Giallo */
     .stButton > button[kind="primary"] {
         background-color: #fbbf24 !important;
-        color: #000 !important;
-        border: none !important;
+        color: black !important;
         font-weight: bold !important;
-    }
-
-    /* Schedina Sidebar */
-    .bet-row {
-        background: white;
-        padding: 6px;
-        border-radius: 4px;
-        margin-bottom: 4px;
-        border-left: 3px solid #1e3c72;
-        font-size: 11px;
+        border: none !important;
+        width: 100% !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-if "user" not in st.session_state:
-    st.stop()
-
-if "carrello" not in st.session_state:
-    st.session_state.carrello = {}
-
-# --- SIDEBAR: NAVIGAZIONE E SCHEDINA ---
+# --- SIDEBAR CON LOGHI DISTANZIATI ---
 with st.sidebar:
-    st.subheader("🏆 BetApp")
-    c_nav1, c_nav2 = st.columns(2)
-    if c_nav1.button("🏠 Home", use_container_width=True): st.switch_page("app.py")
-    if c_nav2.button("⚽ Gioca", type="primary", use_container_width=True): st.rerun()
+    # PARTE ALTA: Logo Ghiandaia e Titolo
+    st.markdown("<br>", unsafe_allow_html=True)
+    if os.path.exists("logo1.png"):
+        st.image("logo1.png", use_container_width=True)
+    else:
+        st.title("🏆 FantaSchedina")
     
     st.markdown("---")
-    st.write("📋 **LA TUA GIOCATA**")
     
-    # Box schedina con scroll interno bloccato
-    with st.container(height=400, border=False):
-        if not st.session_state.carrello:
-            st.caption("Seleziona quote dal palinsesto")
-        else:
-            somma = 0.0
-            for p_id in sorted(st.session_state.carrello.keys()):
-                item = st.session_state.carrello[p_id]
-                with st.container():
-                    col_t, col_x = st.columns([4, 1])
-                    col_t.markdown(f"<div class='bet-row'><b>{item['match'][:18]}</b><br>{item['esito']} @ {item['quota']}</div>", unsafe_allow_html=True)
-                    if col_x.button("✕", key=f"del_{p_id}"):
-                        del st.session_state.carrello[p_id]
-                        st.rerun()
-                    somma += item['quota']
+    # Navigazione
+    if st.button("🏠 Home / Login", type="primary", use_container_width=True):
+        st.switch_page("app.py")
+    if st.button("⚽ Gioca Ora", use_container_width=True):
+        st.switch_page("pages/1_Gioca.py")
     
-    if st.session_state.carrello:
-        st.markdown(f"### TOT: {somma:.2f}")
-        if st.button("🚀 INVIA SCHEDINA", type="primary", use_container_width=True):
-            st.success("Registrata!")
-            st.session_state.carrello = {}
-            st.rerun()
+    # Spazio flessibile per spingere il secondo logo in fondo
+    st.write("") # placeholder
+    
+    # PARTE BASSA: Logo Acquarossa (Circolare)
+    # Usiamo un container per posizionarlo fisso in basso
+    with st.container():
+        st.markdown("<br><br><br><br>", unsafe_allow_html=True) # Spinta extra
+        if os.path.exists("logo2.png"):
+            st.image("logo2.png", width=150)
+        st.caption("Developed by Acquarossa • 2026")
 
-# --- MAIN: PALINSESTO COMPLETO ---
-st.title("⚽ Palinsesto Professionale")
+# --- CORPO CENTRALE (LOGIN) ---
+col1, col_center, col3 = st.columns([1, 1.2, 1])
 
-try:
-    res = st.session_state.supabase.table("partite").select("*").eq("pubblicata", True).order("id").execute()
-    partite = res.data
+with col_center:
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    # Logo centrale se vuoi rinforzare il brand (opzionale)
+    st.markdown("<h1 style='text-align: center; color: #1e293b;'>BENVENUTO</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b;'>Inserisci le tue credenziali per entrare</p>", unsafe_allow_html=True)
+    
+    # Box di Login pulito
+    with st.container(border=True):
+        st.markdown("### Area Accesso")
+        email = st.text_input("Indirizzo Email")
+        password = st.text_input("Password", type="password")
+        
+        if st.button("ENTRA NEL CAMPIONATO", type="primary", use_container_width=True):
+            # Qui andrà il collegamento a Supabase
+            st.info("Verifica in corso...")
 
-    if partite:
-        # Header con DOPPIA CHANCE incluse [cite: 2026-01-29]
-        cols_size = [2.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        h = st.columns(cols_size)
-        headers = ["PARTITA", "1", "X", "2", "1X", "X2", "12", "U2.5", "O2.5", "G", "NG"]
-        for i, text in enumerate(headers):
-            h[i].caption(f"**{text}**")
-        st.divider()
-
-        for p in partite:
-            r = st.columns(cols_size)
-            r[0].write(f"**{p['match']}**")
-            
-            # Mappatura chiavi database -> Etichette interfaccia [cite: 2026-01-29]
-            quote_map = [
-                ('quote_1', '1'), ('quote_x', 'X'), ('quote_2', '2'),
-                ('quote_1x', '1X'), ('quote_x2', 'X2'), ('quote_12', '12'),
-                ('quote_u25', 'U'), ('quote_o25', 'O'), ('quote_g', 'G'), ('quote_ng', 'NG')
-            ]
-            
-            for i, (q_key, label) in enumerate(quote_map):
-                val = p[q_key]
-                is_sel = (p['id'] in st.session_state.carrello and st.session_state.carrello[p['id']]['esito'] == label)
-                
-                if r[i+1].button(str(val), key=f"q_{p['id']}_{q_key}", type="primary" if is_sel else "secondary"):
-                    st.session_state.carrello[p['id']] = {"match": p['match'], "esito": label, "quota": float(val)}
-                    st.rerun()
-except Exception as e:
-    st.error(f"Errore: {e}")
+    st.markdown("<p style='text-align: center; font-size: 11px; color: #94a3b8; margin-top: 20px;'>FantaSchedina Professional v2.0</p>", unsafe_allow_html=True)
