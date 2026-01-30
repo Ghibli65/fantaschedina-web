@@ -1,70 +1,100 @@
 import streamlit as st
-from supabase import create_client
+from supabase import create_client, Client
 
-# Configurazione della pagina
-st.set_page_config(page_title="FantaSchedina", layout="wide")
+# 1. Configurazione Iniziale
+st.set_page_config(page_title="FantaSchedina - Home", layout="wide")
 
-# --- INIZIALIZZAZIONE SUPABASE CON CONTROLLO ERRORI ---
+# 2. Inizializzazione Supabase (Assicurati che i segreti siano nel file .streamlit/secrets.toml)
 if "supabase" not in st.session_state:
-    try:
-        # Recupero credenziali dai Secrets [cite: 2026-01-29]
-        url = st.secrets.get("supabase_url")
-        key = st.secrets.get("supabase_key")
-        
-        if not url or not key:
-            st.error("🚨 Errore: Credenziali Supabase mancanti nei Secrets!")
-            st.stop()
-            
-        st.session_state.supabase = create_client(url, key)
-    except Exception as e:
-        st.error(f"🚨 Errore di connessione a Supabase: {e}")
-        st.stop()
+    url = st.secrets["supabase_url"]
+    key = st.secrets["supabase_key"]
+    st.session_state.supabase = create_client(url, key)
 
-# --- CSS PERSONALIZZATO (Senza barre e pulito) ---
+# 3. CSS per Professionalità ed Estetica
 st.markdown("""
     <style>
+    /* Sfondo pagina grigio chiarissimo professionale */
+    .stApp {
+        background-color: #f4f7f9;
+    }
+    
+    /* Pulizia Sidebar */
     [data-testid="stSidebarNav"] {display: none;}
-    .stPageLink {background-color: #f0f2f6; border-radius: 8px; margin-bottom: 5px;}
-    .login-container {max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;}
+    
+    /* Box Login Moderno */
+    .login-box {
+        background-color: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        max-width: 500px;
+        margin: auto;
+    }
+    
+    /* Header Benvenuto */
+    .welcome-text {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #1e3c72;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    /* Footer Sidebar */
+    .sidebar-footer {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        text-align: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNZIONE DI LOGOUT ---
-def logout_process():
-    if "user" in st.session_state:
-        del st.session_state["user"]
-    st.rerun()
-
-# --- SIDEBAR ---
-st.sidebar.title("🏆 FantaSchedina")
-st.sidebar.page_link("app.py", label="Home / Login", icon="🏠")
-
-if "user" in st.session_state:
-    st.sidebar.page_link("pages/1_Gioca.py", label="⚽ GIOCA ORA", icon="⚽")
-    st.sidebar.divider()
-    if st.sidebar.button("🚪 ESCI", use_container_width=True):
-        logout_process()
-else:
-    st.sidebar.page_link("pages/2_Registrazione.py", label="📝 Registrazione", icon="📩")
-    st.sidebar.page_link("pages/3_Admin.py", label="🔐 Accesso Admin", icon="🕵️")
-
-# --- CONTENUTO HOME ---
-if "user" in st.session_state:
-    st.title(f"Bentornato!")
-    st.success(f"Loggato come: {st.session_state.user.email}")
-    st.write("Seleziona **GIOCA ORA** dal menu a sinistra per inserire i tuoi pronostici.")
-else:
-    st.title("⚽ Benvenuto su FantaSchedina")
-    st.write("Accedi per partecipare al campionato.")
+# --- SIDEBAR PERSONALIZZATA ---
+with st.sidebar:
+    # Logo 1: Identità (in alto)
+    st.image("logo1.png", width=150) # Assicurati di avere il file o l'URL
+    st.markdown("### 🏆 FantaSchedina")
+    st.divider()
     
-    with st.container():
+    # Menu di Navigazione pulito
+    if st.button("🏠 Home / Login", use_container_width=True, type="primary"):
+        st.switch_page("app.py")
+    if st.button("⚽ Gioca", use_container_width=True):
+        st.switch_page("pages/1_Gioca.py")
+    
+    # Logo 2: Brand (in basso, separato)
+    st.markdown('<div class="sidebar-footer">', unsafe_allow_html=True)
+    st.image("logo2.png", width=120)
+    st.caption("© 2026 FantaSchedina - Pro Version")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- CORPO CENTRALE ---
+col_l, col_main, col_r = st.columns([1, 2, 1])
+
+with col_main:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<h1 class='welcome-text'>Benvenuto su FantaSchedina</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#64748b;'>Inserisci le tue credenziali per accedere al campionato</p>", unsafe_allow_html=True)
+    
+    # Contenitore Login
+    with st.container(border=True):
         email = st.text_input("Email")
-        pwd = st.text_input("Password", type="password")
-        if st.button("ACCEDI", type="primary", use_container_width=True):
+        password = st.text_input("Password", type="password")
+        
+        c1, c2 = st.columns(2)
+        if c1.button("ACCEDI", type="primary", use_container_width=True):
             try:
-                # Tentativo di login [cite: 2026-01-29]
-                auth = st.session_state.supabase.auth.sign_in_with_password({"email": email, "password": pwd})
-                st.session_state.user = auth.user
+                res = st.session_state.supabase.auth.sign_in_with_password({"email": email, "password": password})
+                st.session_state.user = res.user
+                st.success("Accesso eseguito!")
                 st.rerun()
-            except:
-                st.error("Credenziali non valide.")
+            except Exception as e:
+                st.error("Credenziali non valide")
+        
+        if c2.button("REGISTRATI", use_container_width=True):
+            st.info("Funzione di registrazione in arrivo...")
+
+    # Spazio per comunicazioni o news
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.info("📢 **News:** Il nuovo palinsesto della Serie A è ora disponibile!")
