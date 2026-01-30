@@ -1,19 +1,10 @@
 import streamlit as st
-from supabase import create_client
+import os
 
-# Configurazione iniziale
+# Configurazione Pagina
 st.set_page_config(page_title="FantaSchedina - Login", layout="wide")
 
-# Collegamento Supabase
-if "supabase" not in st.session_state:
-    try:
-        url = st.secrets["supabase_url"]
-        key = st.secrets["supabase_key"]
-        st.session_state.supabase = create_client(url, key)
-    except Exception as e:
-        st.error("Errore configurazione Database. Controlla i Secrets!")
-
-# CSS per pulizia e bottoni gialli [cite: 2026-01-29]
+# CSS per Sidebar e Bottoni Gialli [cite: 2026-01-29]
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -22,32 +13,36 @@ st.markdown("""
         color: black !important;
         font-weight: bold !important;
     }
-    .login-box {
-        max-width: 450px;
-        margin: auto;
-        padding: 2rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 15px;
-        background: white;
-    }
+    .main { background-color: #f8fafc; }
     </style>
     """, unsafe_allow_html=True)
 
 # SIDEBAR [cite: 2026-01-29]
 with st.sidebar:
-    st.title("🏆 FantaSchedina")
-    st.button("🏠 Home / Login", use_container_width=True, type="primary")
-    if st.button("⚽ Vai al Palinsesto", use_container_width=True):
+    # Gestione sicura del Logo Ghiandaia
+    if os.path.exists("ghiandaia imitatrice1.jpg"):
+        st.image("ghiandaia imitatrice1.jpg", use_container_width=True)
+    else:
+        st.title("🏆 FantaSchedina")
+    
+    st.markdown("---")
+    if st.button("🏠 Home / Login", use_container_width=True, type="primary"):
+        st.rerun()
+    if st.button("⚽ Vai al Gioco", use_container_width=True):
         st.switch_page("pages/1_Gioca.py")
+    
+    # Logo Acquarossa in fondo
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    if os.path.exists("WhatsApp Image 2026-01-30 at 12.59.32.jpeg"):
+        st.image("WhatsApp Image 2026-01-30 at 12.59.32.jpeg", width=120)
 
 # CORPO CENTRALE
-st.markdown("<br><br>", unsafe_allow_html=True)
-col1, col_mid, col3 = st.columns([1, 1.5, 1])
-
+col1, col_mid, col3 = st.columns([1, 1.2, 1])
 with col_mid:
-    st.markdown("<h1 style='text-align:center;'>BENVENUTO</h1>", unsafe_allow_html=True)
+    st.markdown("<br><br><h1 style='text-align:center;'>BENVENUTO</h1>", unsafe_allow_html=True)
     with st.container(border=True):
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
-        if st.button("ACCEDI AL CAMPIONATO", use_container_width=True, type="primary"):
-            st.info("Verifica credenziali...")
+        st.subheader("Area Accesso")
+        st.text_input("Indirizzo Email")
+        st.text_input("Password", type="password")
+        if st.button("ENTRA NEL CAMPIONATO", use_container_width=True, type="primary"):
+            st.info("Connessione in corso...")
