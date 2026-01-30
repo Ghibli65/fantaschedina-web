@@ -2,97 +2,106 @@ import streamlit as st
 import os
 import base64
 
-# 1. Configurazione Pagina
 st.set_page_config(page_title="FantaSchedina Login", layout="wide")
 
-# Funzione per leggere le immagini e convertirle in formato web (Base64)
-def get_base64_image(image_path):
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-    return None
+# Funzione per caricare le immagini in modo sicuro
+def get_image_base64(path):
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
 
-logo1_b64 = get_base64_image("logo1.png") # Ghiandaia
-logo2_b64 = get_base64_image("logo2.png") # Acquarossa
+# Carichiamo i loghi (Assicurati che i nomi file siano corretti nella cartella)
+logo_top_b64 = get_image_base64("ghiandaia imitatrice1.jpg")
+logo_bottom_b64 = get_image_base64("WhatsApp Image 2026-01-30 at 12.59.32.jpeg")
 
-# 2. CSS "HARD" per bloccare la grafica
+# CSS AGGRESSIVO per eliminare i margini di Streamlit e centrare tutto
 st.markdown(f"""
     <style>
-    /* Sfondo e Pulizia */
-    .stApp {{ background-color: #f0f4f8; }}
-    [data-testid="stSidebarNav"] {{display: none;}}
-
-    /* POSIZIONAMENTO LOGO 1 (ALTO) */
-    .logo-top {{
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 150px;
-    }}
-
-    /* POSIZIONAMENTO LOGO 2 (BASSO) */
-    .logo-bottom {{
-        position: fixed;
-        bottom: 30px;
-        left: 20px;
-        width: 120px;
-        z-index: 999;
-    }}
-
-    /* Centratura Modulo Login */
-    .login-container {{
-        background-color: white;
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        margin-top: 50px;
-    }}
+    /* 1. Sfondo e pulizia margini */
+    .stApp {{ background-color: #f1f5f9; }}
+    [data-testid="stSidebarNav"] {{ display: none; }}
     
-    /* Bottone Giallo Professionale */
+    /* 2. Rimuove lo spazio vuoto in cima alla sidebar */
+    [data-testid="stSidebar"] > div:first-child {{
+        padding-top: 0rem !important;
+    }}
+
+    /* 3. Contenitore Sidebar Personalizzato */
+    .sidebar-content {{
+        display: flex;
+        flex-direction: column;
+        height: 95vh;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 10px;
+    }}
+
+    /* 4. Stile Loghi */
+    .img-top {{ width: 180px; transition: 0.3s; }}
+    .img-bottom {{ width: 140px; border-radius: 50%; }}
+
+    /* 5. Box Login Centrato e Professionale */
+    .login-card {{
+        background: white;
+        padding: 3rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        text-align: center;
+    }}
+
+    /* 6. Bottoni Gialli Uniformi */
     .stButton > button {{
         background-color: #ffc107 !important;
         color: black !important;
         font-weight: bold !important;
-        border-radius: 10px !important;
-        height: 45px !important;
+        border-radius: 8px !important;
         border: none !important;
+        padding: 10px 20px !important;
     }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- SIDEBAR FISSA ---
+# --- SIDEBAR ---
 with st.sidebar:
-    # Logo 1 (Ghiandaia) inserito via HTML per controllo totale
-    if logo1_b64:
-        st.markdown(f'<img src="data:image/png;base64,{logo1_b64}" class="logo-top">', unsafe_allow_html=True)
-    else:
-        st.title("🏆 FantaSchedina")
+    st.markdown(f"""
+        <div class="sidebar-content">
+            <div>
+                <img src="data:image/jpeg;base64,{logo_top_b64}" class="img-top">
+                <h2 style='text-align: center; color: #1e3c72; margin-top: 10px;'>FantaSchedina</h2>
+            </div>
+            
+            <div style="width: 100%;">
+                </div>
+
+            <div>
+                <img src="data:image/jpeg;base64,{logo_bottom_b64}" class="img-bottom">
+                <p style='text-align: center; font-size: 10px; color: #64748b; margin-top: 10px;'>By Acquarossa</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     
-    st.markdown("<br><br><br><br><br><br>", unsafe_allow_html=True) # Spazio per il logo in alto
-    
-    # Menu Navigazione
-    st.markdown("### Menu")
-    if st.button("🏠 Home / Login", use_container_width=True): st.rerun()
-    if st.button("⚽ Vai al Gioco", use_container_width=True): st.switch_page("pages/1_Gioca.py")
-    
-    # Logo 2 (Acquarossa) bloccato in fondo
-    if logo2_b64:
-        st.markdown(f'<img src="data:image/png;base64,{logo2_b64}" class="logo-bottom">', unsafe_allow_html=True)
+    # Inseriamo i pulsanti sopra il logo in basso ma fuori dal div HTML per renderli cliccabili
+    if st.button("🏠 HOME / LOGIN", use_container_width=True): st.rerun()
+    if st.button("⚽ VAI AL GIOCO", use_container_width=True): st.switch_page("pages/1_Gioca.py")
 
 # --- AREA CENTRALE ---
-c1, main_col, c3 = st.columns([1, 1.2, 1])
+_, col_mid, _ = st.columns([1, 1.2, 1])
 
-with main_col:
-    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; color: #1e3c72;'>Area Accesso</h2>", unsafe_allow_html=True)
-    
-    email = st.text_input("Indirizzo Email")
-    password = st.text_input("Password", type="password")
-    
-    if st.button("ENTRA NEL CAMPIONATO", use_container_width=True):
-        # Collegamento database
-        st.info("Accesso in corso...")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 11px; margin-top: 20px;'>FantaSchedina v2.0 - Professional Edition</p>", unsafe_allow_html=True)
+with col_mid:
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    with st.container():
+        st.markdown("""
+            <div class="login-card">
+                <h1 style='color: #1e3c72;'>BENVENUTO</h1>
+                <p style='color: #64748b;'>Inserisci i tuoi dati per accedere</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        with st.form("login_form", clear_on_submit=False):
+            email = st.text_input("Email")
+            password = st.text_input("Password", type="password")
+            if st.form_submit_button("ENTRA NEL CAMPIONATO", use_container_width=True):
+                st.info("Connessione a Supabase...")
+
+    st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 11px; margin-top: 20px;'>v2.0 Professional Edition</p>", unsafe_allow_html=True)
