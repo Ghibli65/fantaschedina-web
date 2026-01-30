@@ -1,78 +1,89 @@
 import streamlit as st
-from supabase import create_client, Client
 import os
 
-# Configurazione Wide e Titolo
-st.set_page_config(page_title="FantaSchedina - Home", layout="wide")
+# 1. Configurazione Pagina
+st.set_page_config(page_title="FantaSchedina - Login", layout="wide")
 
-# CSS per Sfondo Azzurro Polvere e Sidebar Fissa
+# 2. CSS Avanzato per distanziare i loghi e pulire il fondo
 st.markdown("""
     <style>
-    .stApp { background-color: #f0f4f8; } /* Sfondo azzurro polvere chiarissimo */
+    /* Fondo azzurro polvere/grigio professionale */
+    .stApp { background-color: #f8fafc; }
+    
+    /* Nasconde il menu di navigazione automatico */
     [data-testid="stSidebarNav"] {display: none;}
-    
-    /* Box Login Bianco e Pulito */
-    .stForm {
-        background-color: white !important;
-        padding: 30px !important;
-        border-radius: 15px !important;
-        border: none !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;
+
+    /* Centratura del modulo di login */
+    .auth-container {
+        max-width: 400px;
+        margin: auto;
+        padding-top: 50px;
     }
-    
-    /* Titolo Home */
-    .welcome-header {
-        color: #1e3c72;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-weight: 800;
-        text-align: center;
-        margin-bottom: 0px;
+
+    /* Stile Sidebar per bloccare i loghi */
+    section[data-testid="stSidebar"] > div {
+        display: flex;
+        flex-direction: column;
+        justify-content:空间-between;
+        height: 100vh;
+    }
+
+    /* Bottone Login Giallo */
+    .stButton > button[kind="primary"] {
+        background-color: #fbbf24 !important;
+        color: black !important;
+        font-weight: bold !important;
+        border: none !important;
+        width: 100% !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- SIDEBAR PROFESSIONALE ---
+# --- SIDEBAR CON LOGHI DISTANZIATI ---
 with st.sidebar:
-    # Gestione Errore Logo 1
+    # PARTE ALTA: Logo Ghiandaia e Titolo
+    st.markdown("<br>", unsafe_allow_html=True)
     if os.path.exists("logo1.png"):
-        st.image("logo1.png", width=160)
+        st.image("logo1.png", use_container_width=True)
     else:
         st.title("🏆 FantaSchedina")
     
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("---")
     
-    # Navigazione Utente
-    if st.button("🏠 Home / Login", use_container_width=True, type="primary"):
+    # Navigazione
+    if st.button("🏠 Home / Login", type="primary", use_container_width=True):
         st.switch_page("app.py")
     if st.button("⚽ Gioca Ora", use_container_width=True):
         st.switch_page("pages/1_Gioca.py")
     
-    # Spazio vuoto per spingere il secondo logo in basso
-    st.markdown("<br><br><br><br><br><br>", unsafe_allow_html=True)
+    # Spazio flessibile per spingere il secondo logo in fondo
+    st.write("") # placeholder
     
-    # Logo 2 (FantaSchedina circolare) in fondo alla sidebar
-    if os.path.exists("logo2.png"):
-        st.divider()
-        st.image("logo2.png", width=130)
-        st.caption("Official Partner App")
+    # PARTE BASSA: Logo Acquarossa (Circolare)
+    # Usiamo un container per posizionarlo fisso in basso
+    with st.container():
+        st.markdown("<br><br><br><br>", unsafe_allow_html=True) # Spinta extra
+        if os.path.exists("logo2.png"):
+            st.image("logo2.png", width=150)
+        st.caption("Developed by Acquarossa • 2026")
 
-# --- CORPO CENTRALE ---
-col_1, col_center, col_3 = st.columns([1, 1.5, 1])
+# --- CORPO CENTRALE (LOGIN) ---
+col1, col_center, col3 = st.columns([1, 1.2, 1])
 
 with col_center:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("<h1 class='welcome-header'>BENVENUTO</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#5a7184; margin-bottom:30px;'>Accedi al pannello per gestire le tue giocate</p>", unsafe_allow_html=True)
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    # Logo centrale se vuoi rinforzare il brand (opzionale)
+    st.markdown("<h1 style='text-align: center; color: #1e293b;'>BENVENUTO</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b;'>Inserisci le tue credenziali per entrare</p>", unsafe_allow_html=True)
     
-    with st.form("Login Form"):
+    # Box di Login pulito
+    with st.container(border=True):
         st.markdown("### Area Accesso")
         email = st.text_input("Indirizzo Email")
         password = st.text_input("Password", type="password")
-        submit = st.form_submit_button("ENTRA NEL CAMPIONATO", use_container_width=True)
         
-        if submit:
-            # Qui andrà la tua logica Supabase
-            st.info("Verifica credenziali in corso...")
+        if st.button("ENTRA NEL CAMPIONATO", type="primary", use_container_width=True):
+            # Qui andrà il collegamento a Supabase
+            st.info("Verifica in corso...")
 
-    # Footer estetico sotto il login
-    st.markdown("<br><p style='text-align:center; font-size:12px; color:#94a3b8;'>FantaSchedina v2.0 Professional Edition • 2026</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 11px; color: #94a3b8; margin-top: 20px;'>FantaSchedina Professional v2.0</p>", unsafe_allow_html=True)
