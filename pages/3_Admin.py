@@ -2,6 +2,16 @@ import streamlit as st
 from datetime import datetime
 import pandas as pd
 
+with st.sidebar:
+    st.title("⚙️ Pannello Admin")
+    st.divider()
+    if st.button("🏠 Home", use_container_width=True):
+        st.switch_page("app.py")
+    if st.button("⚽ Palinsesto Utenti", use_container_width=True):
+        st.switch_page("pages/1_Gioca.py")
+    st.divider()
+    st.info("Loggato come: ADMIN")
+
 st.set_page_config(page_title="Admin - Carica & Gestisci", layout="wide")
 
 # CSS consolidato
