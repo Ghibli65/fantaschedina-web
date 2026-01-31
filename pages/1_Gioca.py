@@ -1,6 +1,32 @@
 import streamlit as st
 from datetime import datetime
 
+# Simuliamo il recupero della data (che Admin ha appena cambiato)
+if "deadline_giornata" not in st.session_state:
+    st.session_state.deadline_giornata = datetime(2026, 1, 31, 15, 30)
+
+ora_attuale = datetime.now()
+# Il sistema ora vede la NUOVA data impostata dall'admin
+scaduta = ora_attuale > st.session_state.deadline_giornata
+
+with st.sidebar:
+    st.markdown("### 🏆 FantaSchedina")
+    st.divider()
+    # Key univoci per evitare StreamlitDuplicateElementId
+    if st.button("🏠 Home", key="btn_home_gioca", use_container_width=True):
+        st.switch_page("app.py")
+    if st.button("⚽ Palinsesto", key="btn_palin_gioca", use_container_width=True, type="primary"):
+        st.rerun()
+    
+    st.divider()
+    # Mostra la nuova scadenza aggiornata
+    scad_format = st.session_state.deadline_giornata.strftime("%d/%m/%Y alle %H:%M")
+    if not scaduta:
+        st.success(f"✅ GIOCATE RIAPERTE!\nScadenza: {scad_format}")
+    else:
+        st.error(f"🚫 Tempo scaduto!\nTermine: {scad_format}")
+
+
 import streamlit as st
 
 # 1. Questa deve essere la PRIMISSIMA riga di codice dopo gli import
