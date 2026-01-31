@@ -4,7 +4,7 @@ import pandas as pd
 
 st.set_page_config(page_title="Admin - Carica Quote", layout="wide")
 
-# CSS per bottoni gialli e tabelle
+# CSS per bottoni gialli e tabelle ordinate
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
@@ -13,10 +13,11 @@ st.markdown("""
         color: black !important;
         font-weight: bold !important;
     }
+    /* Forza la visualizzazione pulita delle tabelle */
+    .stDataFrame td { text-align: center !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# Lista persistente per le partite caricate
 if "lista_partite_admin" not in st.session_state:
     st.session_state.lista_partite_admin = []
 
@@ -44,10 +45,10 @@ st.divider()
 
 # --- SEZIONE 2: CARICA IN BLOCCO (TESTO) ---
 st.subheader("🚀 Caricamento Rapido in Blocco")
-st.caption("Incolla qui la stringa delle partite (es. Lazio-Genoa;2,1;2,9;...) e premi 'Elabora'")
-input_blocco = st.text_area("Incolla qui le partite", height=150, placeholder="Lazio - Genoa;2,1;2,9;...")
+st.caption("Incolla la stringa. Formato: Match;1;X;2;1X;X2;12;U;O;G;NG")
+input_blocco = st.text_area("Incolla qui le partite", height=150)
 
-if st.button("ELABORA E AGGIUNGI ALLA TABELLA", type="primary"):
+if st.button("ELABORA E AGGIUNGI ALLA LISTA", type="primary"):
     if input_blocco:
         righe = input_blocco.strip().split('\n')
         nuove_partite = 0
@@ -55,47 +56,45 @@ if st.button("ELABORA E AGGIUNGI ALLA TABELLA", type="primary"):
             dati = riga.split(';')
             if len(dati) >= 11:
                 try:
-                    # Pulizia e conversione dei dati (gestisce la virgola decimale)
+                    # Trasformo in float e arrotondo a 2 decimali
+                    def fmt(val): return round(float(val.replace(',', '.')), 2)
+                    
                     nuovo = {
-                        "Giorno/Ora Termine": f"{data_scad} {ora_scad}",
                         "Match": dati[0].strip(),
-                        "1": float(dati[1].replace(',', '.')),
-                        "X": float(dati[2].replace(',', '.')),
-                        "2": float(dati[3].replace(',', '.')),
-                        "1X": float(dati[4].replace(',', '.')),
-                        "X2": float(dati[5].replace(',', '.')),
-                        "12": float(dati[6].replace(',', '.')),
-                        "U2.5": float(dati[7].replace(',', '.')),
-                        "O2.5": float(dati[8].replace(',', '.')),
-                        "G": float(dati[9].replace(',', '.')),
-                        "NG": float(dati[10].replace(',', '.')),
-                        "Giornata": giornata_admin
+                        "1": fmt(dati[1]), "X": fmt(dati[2]), "2": fmt(dati[3]),
+                        "1X": fmt(dati[4]), "X2": fmt(dati[5]), "12": fmt(dati[6]),
+                        "U2.5": fmt(dati[7]), "O2.5": fmt(dati[8]),
+                        "G": fmt(dati[9]), "NG": fmt(dati[10]),
+                        "Giornata": giornata_admin,
+                        "Scadenza": f"{data_scad} {ora_scad}"
                     }
                     st.session_state.lista_partite_admin.append(nuovo)
                     nuove_partite += 1
-                except Exception as e:
-                    st.error(f"Errore nella riga: {riga}. Controlla il formato.")
+                except:
+                    st.error(f"Errore nel formato della riga: {riga[:30]}...")
         if nuove_partite > 0:
-            st.success(f"✅ Aggiunte {nuove_partite} partite alla lista!")
+            st.success(f"✅ Aggiunte {nuove_partite} partite!")
             st.rerun()
-    else:
-        st.warning("L'area di testo è vuota!")
 
-# --- SEZIONE 3: RIEPILOGO E SALVATAGGIO ---
+# --- SEZIONE 3: RIEPILOGO FORMATTATO (2 DECIMALI) ---
 if st.session_state.lista_partite_admin:
     st.divider()
-    st.subheader(f"📋 Riepilogo Inserimenti in Blocco - Giornata {giornata_admin}")
+    st.subheader(f"📋 Anteprima Giornata {giornata_admin}")
     
     df = pd.DataFrame(st.session_state.lista_partite_admin)
-    # Mostriamo solo le colonne necessarie nella tabella
-    st.table(df[["Match", "1", "X", "2", "1X", "X2", "12", "U2.5", "O2.5", "G", "NG"]])
+    
+    # FORMATTAZIONE: Forza le 2 cifre decimali su tutte le colonne numeriche
+    cols_quote = ["1", "X", "2", "1X", "X2", "12", "U2.5", "O2.5", "G", "NG"]
+    format_dict = {col: "{:.2f}" for col in cols_quote}
+    
+    # Visualizzazione tabella pulita
+    st.table(df[["Match"] + cols_quote].style.format(format_dict))
     
     col_del, col_save = st.columns([1, 4])
     if col_del.button("🗑️ Svuota Tutto"):
         st.session_state.lista_partite_admin = []
         st.rerun()
     
-    if col_save.button("🚀 SALVA DEFINITIVAMENTE TUTTO", type="primary", use_container_width=True):
-        # Qui metteremo il codice per inviare tutto a Supabase
+    if col_save.button("🚀 SALVA TUTTO NEL DATABASE", type="primary", use_container_width=True):
         st.balloons()
-        st.success("Tutte le partite sono state salvate correttamente!")
+        st.success("Dati pronti per il database!")
