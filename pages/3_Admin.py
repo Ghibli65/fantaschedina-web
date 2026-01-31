@@ -2,6 +2,26 @@ import streamlit as st
 from datetime import datetime
 import pandas as pd
 
+st.markdown("""
+    <style>
+    /* Rimuove il menu di navigazione standard di Streamlit */
+    [data-testid="stSidebarNav"] {display: none;}
+    
+    /* Blocca la sidebar in posizione fissa */
+    section[data-testid="stSidebar"] > div {
+        position: fixed;
+        width: inherit;
+    }
+    
+    /* Stile bottoni gialli (ieri) */
+    .stButton > button[kind="primary"] {
+        background-color: #ffc107 !important;
+        color: black !important;
+        font-weight: bold !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.set_page_config(page_title="Admin - Carica & Gestisci", layout="wide")
 
 # CSS consolidato
