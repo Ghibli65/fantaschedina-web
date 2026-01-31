@@ -38,12 +38,16 @@ st.markdown("""
 with st.sidebar:
     st.markdown("### 🏆 FantaSchedina")
     st.divider()
-    if st.button("🏠 Home", use_container_width=True, type="primary" if st.session_state.get('page') == 'home' else 'secondary'):
+    
+    # Aggiungiamo 'key' diversi per evitare il duplicato
+    if st.button("🏠 Home", use_container_width=True, key="side_home_admin"):
         st.switch_page("app.py")
-    if st.button("⚽ Palinsesto", use_container_width=True):
+        
+    if st.button("⚽ Palinsesto", use_container_width=True, key="side_palinsesto_admin"):
         st.switch_page("pages/1_Gioca.py")
-    if st.button("⚙️ Pannello Admin", use_container_width=True):
-        st.switch_page("pages/2_Admin.py")
+        
+    if st.button("⚙️ Pannello Admin", use_container_width=True, key="side_admin_admin", type="primary"):
+        st.rerun()
 
 with st.sidebar:
     st.title("⚙️ Pannello Admin")
