@@ -2,116 +2,58 @@ import streamlit as st
 from datetime import datetime
 import pandas as pd
 
-import streamlit as st
+st.set_page_config(page_title="Admin", layout="wide", initial_sidebar_state="expanded")
 
-# 1. Questa deve essere la PRIMISSIMA riga di codice dopo gli import
-st.set_page_config(layout="wide", initial_sidebar_state="expanded")
-
-# 2. CSS Blindato per Sidebar Fissa e Bottoni Gialli
-st.markdown("""
-    <style>
-    /* Rimuove la navigazione standard per evitare doppioni */
-    [data-testid="stSidebarNav"] {display: none;}
-    
-    /* BLOCCA LA SIDEBAR: non deve sparire mai */
-    section[data-testid="stSidebar"] {
-        min-width: 250px !important;
-        max-width: 250px !important;
-    }
-    
-    section[data-testid="stSidebar"] > div {
-        position: fixed !important;
-        width: 250px !important;
-    }
-
-    /* Stile Bottoni Gialli come da tuoi screenshot */
-    .stButton > button[kind="primary"] {
-        background-color: #ffc107 !important;
-        color: black !important;
-        font-weight: bold !important;
-        border-radius: 8px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# 3. SIDEBAR FISSA (Identica per tutti i file)
-with st.sidebar:
-    st.markdown("### 🏆 FantaSchedina")
-    st.divider()
-    
-    # Aggiungiamo 'key' diversi per evitare il duplicato
-    if st.button("🏠 Home", use_container_width=True, key="side_home_admin"):
-        st.switch_page("app.py")
-        
-    if st.button("⚽ Palinsesto", use_container_width=True, key="side_palinsesto_admin"):
-        st.switch_page("pages/1_Gioca.py")
-        
-    if st.button("⚙️ Pannello Admin", use_container_width=True, key="side_admin_admin", type="primary"):
-        st.rerun()
-
-with st.sidebar:
-    st.title("⚙️ Pannello Admin")
-    st.divider()
-    if st.button("🏠 Home", use_container_width=True):
-        st.switch_page("app.py")
-    if st.button("⚽ Palinsesto Utenti", use_container_width=True):
-        st.switch_page("pages/1_Gioca.py")
-    st.divider()
-    st.info("Loggato come: ADMIN")
-
-st.set_page_config(page_title="Admin - Carica & Gestisci", layout="wide")
-
-# CSS consolidato
 st.markdown("""
     <style>
     [data-testid="stSidebarNav"] {display: none;}
-    .stButton > button[kind="primary"] {
-        background-color: #ffc107 !important;
-        color: black !important;
-        font-weight: bold !important;
-    }
+    section[data-testid="stSidebar"] > div { position: fixed; width: 250px; }
+    .stButton > button[kind="primary"] { background-color: #ffc107 !important; color: black !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# Simulazione database giornate chiuse
-if "giornate_archiviate" not in st.session_state:
-    st.session_state.giornate_archiviate = [
-        {"Giornata": 22, "Scadenza": "2026-01-20 15:00", "Stato": "Chiuso"},
-        {"Giornata": 23, "Scadenza": "2026-01-27 18:30", "Stato": "Chiuso"}
-    ]
+if "lista_partite_admin" not in st.session_state:
+    st.session_state.lista_partite_admin = []
 
-tab1, tab2 = st.tabs(["🚀 Carica Nuove Quote", "🔓 Riapri Gioco"])
+with st.sidebar:
+    st.markdown("### ⚙️ Admin")
+    st.divider()
+    if st.button("🏠 Home", key="nav_home_adm", use_container_width=True):
+        st.switch_page("app.py")
+    if st.button("⚽ Palinsesto", key="nav_gioca_adm", use_container_width=True):
+        st.switch_page("pages/1_Gioca.py")
 
-# --- TAB 1: CARICAMENTO (Il codice di prima) ---
+st.title("🛠️ Gestione Schedina")
+
+tab1, tab2 = st.tabs(["🚀 Carica in Blocco", "🔓 Riapri Gioco"])
+
 with tab1:
-    st.subheader("Caricamento Rapido e Scadenze")
-    # ... (qui resta il codice del caricamento in blocco con 2 decimali) ...
-    st.info("Usa questa sezione per le nuove partite.")
+    c1, c2, c3 = st.columns(3)
+    giornata = c1.number_input("N° Giornata", min_value=1, step=1, key="g_admin")
+    d_scad = c2.date_input("Data Termine", key="d_admin")
+    o_scad = c3.time_input("Ora Termine", key="o_admin")
+    
+    input_testo = st.text_area("Incolla partite (Match;1;X;2;1X;X2;12;U;O;G;NG)", height=150)
+    if st.button("ELABORA E CARICA", key="btn_elabora", type="primary", use_container_width=True):
+        if input_testo:
+            righe = input_testo.strip().split('\n')
+            for r in righe:
+                d = r.split(';')
+                if len(d) >= 11:
+                    st.session_state.lista_partite_admin.append({
+                        "Match": d[0], "1": d[1].replace(',','.'), "X": d[2].replace(',','.') # ecc...
+                    })
+            st.session_state.deadline_giornata = datetime.combine(d_scad, o_scad)
+            st.success("Partite caricate e scadenza impostata!")
 
-# --- TAB 2: RIAPRI IL GIOCO (Nuova funzione) ---
 with tab2:
-    st.subheader("🔄 Gestione Giornate Chiuse")
-    st.caption("Elenco delle giornate con termine scaduto. Puoi impostare una nuova data per riaprirle.")
-
-    if st.session_state.giornate_archiviate:
-        df_chiuse = pd.DataFrame(st.session_state.giornate_archiviate)
-        st.table(df_chiuse)
-
-        with st.container(border=True):
-            st.write("**Seleziona giornata da riaprire**")
-            c1, c2, c3 = st.columns([1, 1.5, 1.5])
-            
-            with c1:
-                scelta_g = st.selectbox("Giornata", options=[g["Giornata"] for g in st.session_state.giornate_archiviate])
-            with c2:
-                nuova_data = st.date_input("Nuova Data Chiusura", key="nd")
-            with c3:
-                nuova_ora = st.time_input("Nuova Ora Chiusura", key="no")
-            
-            if st.button("CONFERMA RIAPERTURA", type="primary", use_container_width=True):
-                nuova_deadline = f"{nuova_data} {nuova_ora}"
-                # Logica: Aggiorna il database (qui simulato)
-                st.success(f"✅ Giornata {scelta_g} riaperta! Nuova scadenza: {nuova_deadline}")
-                st.balloons()
-    else:
-        st.write("Non ci sono giornate chiuse al momento.")
+    st.subheader("🔄 Riapri una sessione chiusa")
+    # Elenco fittizio per l'esempio
+    g_chiuse = [22, 23, 24]
+    scelta = st.selectbox("Seleziona Giornata da riaprire", g_chiuse, key="sel_riapri")
+    nuova_d = st.date_input("Nuova Data", key="nd_riapri")
+    nuova_o = st.time_input("Nuova Ora", key="no_riapri")
+    
+    if st.button("CONFERMA RIAPERTURA", key="btn_riapri_conf", type="primary", use_container_width=True):
+        st.session_state.deadline_giornata = datetime.combine(nuova_d, nuova_o)
+        st.success(f"✅ Giornata {scelta} riaperta correttamente!")
